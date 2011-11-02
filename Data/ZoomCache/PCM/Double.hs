@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wall -fno-warn-orphans #-}
@@ -75,6 +76,8 @@ instance ZoomReadable (PCM Double) where
         , summaryPCMDoubleAvg   :: {-# UNPACK #-}!Double
         , summaryPCMDoubleRMS   :: {-# UNPACK #-}!Double
         }
+
+    trackIdentifier = const "ZPCMf64b"
 
     readRaw     = PCM <$> readDouble64be
     readSummary = readSummaryPCMDouble
