@@ -21,30 +21,23 @@ The table below describes the encoding of SummaryData for PCM.Double.
 @
    | ...                                                           |   -35
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Entry (double)                                                | 36-39
+   | Min (double)                                                  | 36-39
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                                                               | 40-43
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Exit (double)                                                 | 44-47
+   | Max (double)                                                  | 44-47
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                                                               | 48-51
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Min (double)                                                  | 52-55
+   | Mean [DC Bias] (double)                                       | 52-55
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                                                               | 56-59
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Max (double)                                                  | 60-63
+   | RMS (double)                                                  | 60-63
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                                                               | 64-67
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Avg (double)                                                  | 68-71
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                                                               | 72-75
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | RMS (double)                                                  | 76-79
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                                                               | 80-83
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 @
 
 Field encoding formats:
@@ -77,9 +70,7 @@ import Data.ZoomCache.PCM.Types
 
 instance ZoomReadable (PCM Double) where
     data SummaryData (PCM Double) = SummaryPCMDouble
-        { summaryPCMDoubleEntry :: {-# UNPACK #-}!Double
-        , summaryPCMDoubleExit  :: {-# UNPACK #-}!Double
-        , summaryPCMDoubleMin   :: {-# UNPACK #-}!Double
+        { summaryPCMDoubleMin   :: {-# UNPACK #-}!Double
         , summaryPCMDoubleMax   :: {-# UNPACK #-}!Double
         , summaryPCMDoubleAvg   :: {-# UNPACK #-}!Double
         , summaryPCMDoubleRMS   :: {-# UNPACK #-}!Double
@@ -97,13 +88,12 @@ prettyPacketPCMDouble = printf "%.3f" . unPCM
 readSummaryPCMDouble :: (Functor m, MonadIO m)
                      => Iteratee [Word8] m (SummaryData (PCM Double))
 readSummaryPCMDouble = do
-    [en,ex,mn,mx,avg,rms] <- replicateM 6 readDouble64be
-    return (SummaryPCMDouble en ex mn mx avg rms)
+    [mn,mx,avg,rms] <- replicateM 6 readDouble64be
+    return (SummaryPCMDouble mn mx avg rms)
 
 prettySummaryPCMDouble :: SummaryData (PCM Double) -> String
 prettySummaryPCMDouble SummaryPCMDouble{..} = concat
-    [ printf "\tentry: %.3f\texit: %.3f\tmin: %.3f\tmax: %.3f\t"
-          summaryPCMDoubleEntry summaryPCMDoubleExit summaryPCMDoubleMin summaryPCMDoubleMax
+    [ printf "\tmin: %.3f\tmax: %.3f\t" summaryPCMDoubleMin summaryPCMDoubleMax
     , printf "avg: %.3f\trms: %.3f" summaryPCMDoubleAvg summaryPCMDoubleRMS
     ]
 
@@ -129,8 +119,6 @@ instance ZoomWrite (TimeStamp, PCM Double) where
 instance ZoomWritable (PCM Double) where
     data SummaryWork (PCM Double) = SummaryWorkPCMDouble
         { swPCMDoubleTime  :: {-# UNPACK #-}!TimeStamp
-        , swPCMDoubleEntry :: {-# UNPACK #-}!Double
-        , swPCMDoubleExit  :: {-# UNPACK #-}!Double
         , swPCMDoubleMin   :: {-# UNPACK #-}!Double
         , swPCMDoubleMax   :: {-# UNPACK #-}!Double
         , swPCMDoubleSum   :: {-# UNPACK #-}!Double
@@ -147,8 +135,6 @@ instance ZoomWritable (PCM Double) where
 initSummaryPCMDouble :: TimeStamp -> SummaryWork (PCM Double)
 initSummaryPCMDouble entry = SummaryWorkPCMDouble
     { swPCMDoubleTime = entry
-    , swPCMDoubleEntry = 0.0
-    , swPCMDoubleExit = 0.0
     , swPCMDoubleMin = 1000.0 -- floatMax
     , swPCMDoubleMax = -1000.0 -- negate floatMax
     , swPCMDoubleSum = 0.0
@@ -158,9 +144,7 @@ initSummaryPCMDouble entry = SummaryWorkPCMDouble
 mkSummaryPCMDouble :: Double -> SummaryWork (PCM Double)
                    -> SummaryData (PCM Double)
 mkSummaryPCMDouble dur SummaryWorkPCMDouble{..} = SummaryPCMDouble
-    { summaryPCMDoubleEntry = swPCMDoubleEntry
-    , summaryPCMDoubleExit = swPCMDoubleExit
-    , summaryPCMDoubleMin = swPCMDoubleMin
+    { summaryPCMDoubleMin = swPCMDoubleMin
     , summaryPCMDoubleMax = swPCMDoubleMax
     , summaryPCMDoubleAvg = swPCMDoubleSum / dur
     , summaryPCMDoubleRMS = sqrt $ swPCMDoubleSumSq / dur
@@ -168,9 +152,7 @@ mkSummaryPCMDouble dur SummaryWorkPCMDouble{..} = SummaryPCMDouble
 
 fromSummaryPCMDouble :: SummaryData (PCM Double) -> Builder
 fromSummaryPCMDouble SummaryPCMDouble{..} = mconcat $ map fromDouble
-    [ summaryPCMDoubleEntry
-    , summaryPCMDoubleExit
-    , summaryPCMDoubleMin
+    [ summaryPCMDoubleMin
     , summaryPCMDoubleMax
     , summaryPCMDoubleAvg
     , summaryPCMDoubleRMS
@@ -179,10 +161,8 @@ fromSummaryPCMDouble SummaryPCMDouble{..} = mconcat $ map fromDouble
 updateSummaryPCMDouble :: Int -> TimeStamp -> PCM Double
                        -> SummaryWork (PCM Double)
                        -> SummaryWork (PCM Double)
-updateSummaryPCMDouble count t (PCM d) SummaryWorkPCMDouble{..} = SummaryWorkPCMDouble
+updateSummaryPCMDouble _ t (PCM d) SummaryWorkPCMDouble{..} = SummaryWorkPCMDouble
     { swPCMDoubleTime = t
-    , swPCMDoubleEntry = if count == 0 then d else swPCMDoubleEntry
-    , swPCMDoubleExit = d
     , swPCMDoubleMin = min swPCMDoubleMin d
     , swPCMDoubleMax = max swPCMDoubleMax d
     , swPCMDoubleSum = swPCMDoubleSum + (d * dur)
@@ -195,9 +175,7 @@ appendSummaryPCMDouble :: Double -> SummaryData (PCM Double)
                        -> Double -> SummaryData (PCM Double)
                        -> SummaryData (PCM Double)
 appendSummaryPCMDouble dur1 s1 dur2 s2 = SummaryPCMDouble
-    { summaryPCMDoubleEntry = summaryPCMDoubleEntry s1
-    , summaryPCMDoubleExit = summaryPCMDoubleExit s2
-    , summaryPCMDoubleMin = min (summaryPCMDoubleMin s1) (summaryPCMDoubleMin s2)
+    { summaryPCMDoubleMin = min (summaryPCMDoubleMin s1) (summaryPCMDoubleMin s2)
     , summaryPCMDoubleMax = max (summaryPCMDoubleMax s1) (summaryPCMDoubleMax s2)
     , summaryPCMDoubleAvg = ((summaryPCMDoubleAvg s1 * dur1) +
                              (summaryPCMDoubleAvg s2 * dur2)) /
