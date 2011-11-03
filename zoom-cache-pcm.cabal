@@ -19,11 +19,20 @@ Category:            Sound
 Cabal-version:       >=1.2
 Build-type:          Simple
 
+flag splitBase
+  description: Use the split-up base package.
+
 -- Extra-source-files:  
 
 Library
+  if flag(splitBase)
+    build-depends:
+      base >= 3 && < 6
+  else
+    build-depends:
+      base < 3
+
   Build-depends:
-    base,
     blaze-builder,
     bytestring,
     containers,
