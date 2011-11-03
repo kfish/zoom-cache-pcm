@@ -22,22 +22,15 @@ The table below describes the encoding of SummaryData for PCM.Int.
 @
    | ...                                                           |   -35
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Entry (int32)                                                 | 36-39
+   | Min (int32)                                                   | 36-39
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Exit (int32)                                                  | 40-43
+   | Max (int32)                                                   | 40-43
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Min (int32)                                                   | 44-47
+   | Mean [DC Bias] (int32)                                        | 44-47
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Max (int32)                                                   | 48-51
+   | RMS (int32)                                                   | 48-51
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | Avg (double)                                                  | 52-55
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                                                               | 56-59
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   | RMS (double)                                                  | 60-63
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |                                                               | 64-67
-   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
 @
 
 Field encoding formats:
@@ -71,9 +64,7 @@ import Data.ZoomCache.PCM.Types
 
 instance ZoomReadable (PCM Int) where
     data SummaryData (PCM Int) = SummaryPCMInt
-        { summaryIntEntry :: {-# UNPACK #-}!Int
-        , summaryIntExit  :: {-# UNPACK #-}!Int
-        , summaryIntMin   :: {-# UNPACK #-}!Int
+        { summaryIntMin   :: {-# UNPACK #-}!Int
         , summaryIntMax   :: {-# UNPACK #-}!Int
         , summaryIntAvg   :: {-# UNPACK #-}!Double
         , summaryIntRMS   :: {-# UNPACK #-}!Double
@@ -93,14 +84,13 @@ prettyPacketPCMInt = show . unPCM
 readSummaryPCMInt :: (Functor m, MonadIO m)
                   => Iteratee [Word8] m (SummaryData (PCM Int))
 readSummaryPCMInt = do
-    [en,ex,mn,mx] <- replicateM 4 readInt32be
+    [mn,mx]   <- replicateM 2 readInt32be
     [avg,rms] <- replicateM 2 readDouble64be
-    return (SummaryPCMInt en ex mn mx avg rms)
+    return (SummaryPCMInt mn mx avg rms)
 
 prettySummaryPCMInt :: SummaryData (PCM Int) -> String
 prettySummaryPCMInt SummaryPCMInt{..} = concat
-    [ printf "\tentry: %d\texit: %df\tmin: %d\tmax: %d\t"
-          summaryIntEntry summaryIntExit summaryIntMin summaryIntMax
+    [ printf "\tmin: %d\tmax: %d\t" summaryIntMin summaryIntMax
     , printf "avg: %.3f\trms: %.3f" summaryIntAvg summaryIntRMS
     ]
 
@@ -126,8 +116,6 @@ instance ZoomWrite (TimeStamp, (PCM Int)) where
 instance ZoomWritable (PCM Int) where
     data SummaryWork (PCM Int) = SummaryWorkPCMInt
         { swPCMIntTime  :: {-# UNPACK #-}!TimeStamp
-        , swPCMIntEntry :: {-# UNPACK #-}!Int
-        , swPCMIntExit  :: {-# UNPACK #-}!Int
         , swPCMIntMin   :: {-# UNPACK #-}!Int
         , swPCMIntMax   :: {-# UNPACK #-}!Int
         , swPCMIntSum   :: {-# UNPACK #-}!Int
@@ -145,8 +133,6 @@ instance ZoomWritable (PCM Int) where
 initSummaryPCMInt :: TimeStamp -> SummaryWork (PCM Int)
 initSummaryPCMInt entry = SummaryWorkPCMInt
     { swPCMIntTime = entry
-    , swPCMIntEntry = 0
-    , swPCMIntExit = 0
     , swPCMIntMin = maxBound
     , swPCMIntMax = minBound
     , swPCMIntSum = 0
@@ -155,9 +141,7 @@ initSummaryPCMInt entry = SummaryWorkPCMInt
 
 mkSummaryPCMInt :: Double -> SummaryWork (PCM Int) -> SummaryData (PCM Int)
 mkSummaryPCMInt dur SummaryWorkPCMInt{..} = SummaryPCMInt
-    { summaryIntEntry = swPCMIntEntry
-    , summaryIntExit = swPCMIntExit
-    , summaryIntMin = swPCMIntMin
+    { summaryIntMin = swPCMIntMin
     , summaryIntMax = swPCMIntMax
     , summaryIntAvg = fromIntegral swPCMIntSum / dur
     , summaryIntRMS = sqrt $ swPCMIntSumSq / dur
@@ -165,9 +149,7 @@ mkSummaryPCMInt dur SummaryWorkPCMInt{..} = SummaryPCMInt
 
 fromSummaryPCMInt :: SummaryData (PCM Int) -> Builder
 fromSummaryPCMInt SummaryPCMInt{..} = mconcat $ map fromIntegral32be
-    [ summaryIntEntry
-    , summaryIntExit
-    , summaryIntMin
+    [ summaryIntMin
     , summaryIntMax
     ] ++ map fromDouble
     [ summaryIntAvg
@@ -177,10 +159,8 @@ fromSummaryPCMInt SummaryPCMInt{..} = mconcat $ map fromIntegral32be
 updateSummaryPCMInt :: Int -> TimeStamp  -> PCM Int
                     -> SummaryWork (PCM Int)
                     -> SummaryWork (PCM Int)
-updateSummaryPCMInt count t (PCM i) SummaryWorkPCMInt{..} = SummaryWorkPCMInt
+updateSummaryPCMInt _ t (PCM i) SummaryWorkPCMInt{..} = SummaryWorkPCMInt
     { swPCMIntTime = t
-    , swPCMIntEntry = if count == 0 then i else swPCMIntEntry
-    , swPCMIntExit = i
     , swPCMIntMin = min swPCMIntMin i
     , swPCMIntMax = max swPCMIntMax i
     , swPCMIntSum = swPCMIntSum + (i * dur)
@@ -193,9 +173,7 @@ appendSummaryPCMInt :: Double -> SummaryData (PCM Int)
                  -> Double -> SummaryData (PCM Int)
                  -> SummaryData (PCM Int)
 appendSummaryPCMInt dur1 s1 dur2 s2 = SummaryPCMInt
-    { summaryIntEntry = summaryIntEntry s1
-    , summaryIntExit = summaryIntExit s2
-    , summaryIntMin = min (summaryIntMin s1) (summaryIntMin s2)
+    { summaryIntMin = min (summaryIntMin s1) (summaryIntMin s2)
     , summaryIntMax = max (summaryIntMax s1) (summaryIntMax s2)
     , summaryIntAvg = ((summaryIntAvg s1 * dur1) +
                        (summaryIntAvg s2 * dur2)) /

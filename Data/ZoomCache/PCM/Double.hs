@@ -91,7 +91,7 @@ prettyPacketPCMDouble = printf "%.3f" . unPCM
 readSummaryPCMDouble :: (Functor m, MonadIO m)
                      => Iteratee [Word8] m (SummaryData (PCM Double))
 readSummaryPCMDouble = do
-    [mn,mx,avg,rms] <- replicateM 6 readDouble64be
+    [mn,mx,avg,rms] <- replicateM 4 readDouble64be
     return (SummaryPCMDouble mn mx avg rms)
 
 prettySummaryPCMDouble :: SummaryData (PCM Double) -> String
