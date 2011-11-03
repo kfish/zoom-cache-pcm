@@ -161,10 +161,10 @@ fromSummaryPCMDouble SummaryPCMDouble{..} = mconcat $ map fromDouble
     , summaryPCMDoubleRMS
     ]
 
-updateSummaryPCMDouble :: Int -> TimeStamp -> PCM Double
+updateSummaryPCMDouble :: TimeStamp -> PCM Double
                        -> SummaryWork (PCM Double)
                        -> SummaryWork (PCM Double)
-updateSummaryPCMDouble _ t (PCM d) SummaryWorkPCMDouble{..} = SummaryWorkPCMDouble
+updateSummaryPCMDouble t (PCM d) SummaryWorkPCMDouble{..} = SummaryWorkPCMDouble
     { swPCMDoubleTime = t
     , swPCMDoubleMin = min swPCMDoubleMin d
     , swPCMDoubleMax = max swPCMDoubleMax d

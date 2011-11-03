@@ -156,10 +156,10 @@ fromSummaryPCMInt SummaryPCMInt{..} = mconcat $ map fromIntegral32be
     , summaryIntRMS
     ]
 
-updateSummaryPCMInt :: Int -> TimeStamp  -> PCM Int
+updateSummaryPCMInt :: TimeStamp -> PCM Int
                     -> SummaryWork (PCM Int)
                     -> SummaryWork (PCM Int)
-updateSummaryPCMInt _ t (PCM i) SummaryWorkPCMInt{..} = SummaryWorkPCMInt
+updateSummaryPCMInt t (PCM i) SummaryWorkPCMInt{..} = SummaryWorkPCMInt
     { swPCMIntTime = t
     , swPCMIntMin = min swPCMIntMin i
     , swPCMIntMax = max swPCMIntMax i
