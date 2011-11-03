@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -57,7 +58,10 @@ import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
 import Control.Monad (replicateM)
 import Control.Monad.Trans (MonadIO)
+import qualified Data.ByteString as B
 import Data.Iteratee (Iteratee)
+import qualified Data.Iteratee as I
+import qualified Data.ListLike as LL
 import Data.Monoid
 import Data.Word
 import Text.Printf
@@ -88,11 +92,13 @@ instance ZoomReadable (PCM Double) where
 prettyPacketPCMDouble :: PCM Double -> String
 prettyPacketPCMDouble = printf "%.3f" . unPCM
 
-readSummaryPCMDouble :: (Functor m, MonadIO m)
-                     => Iteratee [Word8] m (SummaryData (PCM Double))
+readSummaryPCMDouble :: (I.Nullable s, LL.ListLike s Word8, Functor m, MonadIO m)
+                     => Iteratee s m (SummaryData (PCM Double))
 readSummaryPCMDouble = do
     [mn,mx,avg,rms] <- replicateM 4 readDouble64be
     return (SummaryPCMDouble mn mx avg rms)
+{-# SPECIALIZE INLINE readSummaryPCMDouble :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
+{-# SPECIALIZE INLINE readSummaryPCMDouble :: (Functor m, MonadIO m) => Iteratee B.ByteString m (SummaryData (PCM Double)) #-}
 
 prettySummaryPCMDouble :: SummaryData (PCM Double) -> String
 prettySummaryPCMDouble SummaryPCMDouble{..} = concat

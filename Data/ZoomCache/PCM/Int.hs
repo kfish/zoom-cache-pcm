@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -51,7 +52,10 @@ import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
 import Control.Monad (replicateM)
 import Control.Monad.Trans (MonadIO)
+import qualified Data.ByteString as B
 import Data.Iteratee (Iteratee)
+import qualified Data.Iteratee as I
+import qualified Data.ListLike as LL
 import Data.Monoid
 import Data.Word
 import Text.Printf
@@ -81,12 +85,14 @@ instance ZoomReadable (PCM Int) where
 prettyPacketPCMInt :: PCM Int -> String
 prettyPacketPCMInt = show . unPCM
 
-readSummaryPCMInt :: (Functor m, MonadIO m)
-                  => Iteratee [Word8] m (SummaryData (PCM Int))
+readSummaryPCMInt :: (I.Nullable s, LL.ListLike s Word8, Functor m, MonadIO m)
+                  => Iteratee s m (SummaryData (PCM Int))
 readSummaryPCMInt = do
     [mn,mx]   <- replicateM 2 readInt32be
     [avg,rms] <- replicateM 2 readDouble64be
     return (SummaryPCMInt mn mx avg rms)
+{-# SPECIALIZE INLINE readSummaryPCMInt :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Int)) #-}
+{-# SPECIALIZE INLINE readSummaryPCMInt :: (Functor m, MonadIO m) => Iteratee B.ByteString m (SummaryData (PCM Int)) #-}
 
 prettySummaryPCMInt :: SummaryData (PCM Int) -> String
 prettySummaryPCMInt SummaryPCMInt{..} = concat
