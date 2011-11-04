@@ -8,5 +8,5 @@ module Data.ZoomCache.PCM.Types (
 
 import Data.Typeable
 
-data PCM a = PCM { unPCM :: a }
+data PCM a = PCM { unPCM :: !a }
     deriving (Typeable)
