@@ -13,7 +13,7 @@ import Data.ZoomCache.PCM.Types
 import Data.ZoomCache.PCM.Double()
 import Data.ZoomCache.PCM.Int()
 
-import Data.ByteString.Lazy (ByteString)
+import Data.ByteString (ByteString)
 import Data.ZoomCache (TrackType, ttMapping)
 
 pcmMappings :: [ByteString -> Maybe TrackType]
