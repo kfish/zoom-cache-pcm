@@ -14,10 +14,10 @@ import Data.ZoomCache.PCM.Double()
 import Data.ZoomCache.PCM.Int()
 
 import Data.ByteString (ByteString)
-import Data.ZoomCache (TrackType, ttMapping)
+import Data.ZoomCache.Codec (TrackType, identifyTrackType)
 
 pcmMappings :: [ByteString -> Maybe TrackType]
 pcmMappings =
-    [ ttMapping (undefined :: PCM Double)
-    , ttMapping (undefined :: PCM Int)
+    [ identifyTrackType (undefined :: PCM Double)
+    , identifyTrackType (undefined :: PCM Int)
     ]
