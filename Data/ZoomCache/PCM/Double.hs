@@ -15,8 +15,23 @@
    Stability   : unstable
    Portability : unknown
 
-Default codec implementation for PCM Audio of type Double. This module
-implements the interfaces documented in "Data.ZoomCache.Codec".
+Default codec implementation for PCM Audio of type Float and Double.
+This module implements the interfaces documented in "Data.ZoomCache.Codec".
+
+The table below describes the encoding of SummaryData for PCM.Float.
+
+@
+   | ...                                                           |   -35
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Min (float)                                                   | 36-39
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Max (float)                                                   | 40-43
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Mean [DC Bias] (float)                                        | 44-47
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | RMS (float)                                                   | 48-51
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+@
 
 The table below describes the encoding of SummaryData for PCM.Double.
 
@@ -39,11 +54,11 @@ The table below describes the encoding of SummaryData for PCM.Double.
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                                                               | 64-67
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
 @
 
 Field encoding formats:
 
+  @float@:  big-endian IEEE 754-2008 binary32 (IEEE 754-1985 single)
   @double@: big-endian IEEE 754-2008 binary64 (IEEE 754-1985 double)
 
 -}
@@ -81,8 +96,41 @@ class ZoomReadable (PCM a) => ZoomPCMReadable a where
 
     pcmMkSummary :: a -> a -> a -> a -> SummaryData (PCM a)
 
+class ZoomWritable (PCM a) => ZoomPCMWritable a where
+    pcmWorkTime :: SummaryWork (PCM a) -> TimeStamp
+    pcmWorkMin :: SummaryWork (PCM a) -> a
+    pcmWorkMax :: SummaryWork (PCM a) -> a
+    pcmWorkSum :: SummaryWork (PCM a) -> a
+    pcmWorkSumSq :: SummaryWork (PCM a) -> a
+
+    pcmMkSummaryWork :: TimeStamp -> a -> a -> a -> a -> SummaryWork (PCM a)
+
 ----------------------------------------------------------------------
 -- Read
+
+instance ZoomPCMReadable Float where
+    pcmMin = summaryPCMFloatMin
+    pcmMax = summaryPCMFloatMax
+    pcmAvg = summaryPCMFloatAvg
+    pcmRMS = summaryPCMFloatRMS
+
+    pcmMkSummary = SummaryPCMFloat
+
+instance ZoomReadable (PCM Float) where
+    data SummaryData (PCM Float) = SummaryPCMFloat
+        { summaryPCMFloatMin   :: {-# UNPACK #-}!Float
+        , summaryPCMFloatMax   :: {-# UNPACK #-}!Float
+        , summaryPCMFloatAvg   :: {-# UNPACK #-}!Float
+        , summaryPCMFloatRMS   :: {-# UNPACK #-}!Float
+        }
+
+    trackIdentifier = const "ZPCMf32b"
+
+    readRaw     = PCM <$> readFloat32be
+    readSummary = readSummaryPCMFloat
+
+    prettyRaw         = prettyPacketPCMFloat
+    prettySummaryData = prettySummaryPCMFloat
 
 instance ZoomPCMReadable Double where
     pcmMin = summaryPCMDoubleMin
