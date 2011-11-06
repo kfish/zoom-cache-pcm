@@ -173,19 +173,17 @@ initSummaryPCMDouble entry = SummaryWorkPCMDouble
 
 mkSummaryPCMDouble :: Double -> SummaryWork (PCM Double)
                    -> SummaryData (PCM Double)
-mkSummaryPCMDouble dur SummaryWorkPCMDouble{..} = SummaryPCMDouble
-    { summaryPCMDoubleMin = swPCMDoubleMin
-    , summaryPCMDoubleMax = swPCMDoubleMax
-    , summaryPCMDoubleAvg = swPCMDoubleSum / dur
-    , summaryPCMDoubleRMS = sqrt $ swPCMDoubleSumSq / dur
-    }
+mkSummaryPCMDouble dur SummaryWorkPCMDouble{..} =
+    pcmMkSummary swPCMDoubleMin swPCMDoubleMax
+                 (swPCMDoubleSum / dur)
+                 (sqrt $ swPCMDoubleSumSq / dur)
 
 fromSummaryPCMDouble :: SummaryData (PCM Double) -> Builder
-fromSummaryPCMDouble SummaryPCMDouble{..} = mconcat $ map fromDouble
-    [ summaryPCMDoubleMin
-    , summaryPCMDoubleMax
-    , summaryPCMDoubleAvg
-    , summaryPCMDoubleRMS
+fromSummaryPCMDouble s = mconcat $ map fromDouble
+    [ pcmMin s
+    , pcmMax s
+    , pcmAvg s
+    , pcmRMS s
     ]
 
 updateSummaryPCMDouble :: TimeStamp -> PCM Double
@@ -204,16 +202,13 @@ updateSummaryPCMDouble t (PCM d) SummaryWorkPCMDouble{..} = SummaryWorkPCMDouble
 appendSummaryPCMDouble :: Double -> SummaryData (PCM Double)
                        -> Double -> SummaryData (PCM Double)
                        -> SummaryData (PCM Double)
-appendSummaryPCMDouble dur1 s1 dur2 s2 = SummaryPCMDouble
-    { summaryPCMDoubleMin = min (summaryPCMDoubleMin s1) (summaryPCMDoubleMin s2)
-    , summaryPCMDoubleMax = max (summaryPCMDoubleMax s1) (summaryPCMDoubleMax s2)
-    , summaryPCMDoubleAvg = ((summaryPCMDoubleAvg s1 * dur1) +
-                             (summaryPCMDoubleAvg s2 * dur2)) /
-                            durSum
-    , summaryPCMDoubleRMS = sqrt $ ((summaryPCMDoubleRMS s1 * summaryPCMDoubleRMS s1 * dur1) +
-                                 (summaryPCMDoubleRMS s2 * summaryPCMDoubleRMS s2 * dur2)) /
-                                durSum
-    }
+appendSummaryPCMDouble dur1 s1 dur2 s2 = pcmMkSummary
+    (min (pcmMin s1) (pcmMin s2))
+    (max (pcmMax s1) (pcmMax s2))
+    (((pcmAvg s1 * dur1) + (pcmAvg s2 * dur2)) / durSum)
+    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1) +
+             (pcmRMS s2 * pcmRMS s2 * dur2)) /
+            durSum)
     where
         !durSum = dur1 + dur2
 
