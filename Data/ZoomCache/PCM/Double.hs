@@ -82,28 +82,9 @@ import Data.Word
 import Text.Printf
 
 import Data.ZoomCache.Codec
+import Data.ZoomCache.PCM.Internal
 import Data.ZoomCache.PCM.Types
 -- import Numeric.FloatMinMax
-
-----------------------------------------------------------------------
--- ZoomPCMReadable
-
-class ZoomReadable (PCM a) => ZoomPCMReadable a where
-    pcmMin :: SummaryData (PCM a) -> a
-    pcmMax :: SummaryData (PCM a) -> a
-    pcmAvg :: SummaryData (PCM a) -> a
-    pcmRMS :: SummaryData (PCM a) -> a
-
-    pcmMkSummary :: a -> a -> a -> a -> SummaryData (PCM a)
-
-class ZoomWritable (PCM a) => ZoomPCMWritable a where
-    pcmWorkTime :: SummaryWork (PCM a) -> TimeStamp
-    pcmWorkMin :: SummaryWork (PCM a) -> a
-    pcmWorkMax :: SummaryWork (PCM a) -> a
-    pcmWorkSum :: SummaryWork (PCM a) -> a
-    pcmWorkSumSq :: SummaryWork (PCM a) -> a
-
-    pcmMkSummaryWork :: TimeStamp -> a -> a -> a -> a -> SummaryWork (PCM a)
 
 ----------------------------------------------------------------------
 -- Read
@@ -276,19 +257,6 @@ fromSummaryPCMFloat s = mconcat $ map fromFloat
 fromSummaryPCMDouble :: SummaryData (PCM Double) -> Builder
 fromSummaryPCMDouble s = mconcat $ map fromDouble
     [ pcmMin s , pcmMax s , pcmAvg s , pcmRMS s ]
-
-updateSummaryPCM :: (Ord a, Num a,
-                     ZoomPCMReadable a, ZoomPCMWritable a)
-                 => TimeStamp -> PCM a
-                 -> SummaryWork (PCM a)
-                 -> SummaryWork (PCM a)
-updateSummaryPCM t (PCM d) sw =
-    pcmMkSummaryWork t (min (pcmWorkMin sw) d)
-                       (max (pcmWorkMax sw) d)
-                       ((pcmWorkSum sw) + (d * dur))
-                       ((pcmWorkSumSq sw) + (d*d * dur))
-    where
-        !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
 
 appendSummaryPCMFloat :: (Ord a, Floating a, ZoomPCMReadable a)
                       => Double -> SummaryData (PCM a)

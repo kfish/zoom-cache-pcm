@@ -46,6 +46,7 @@ Library
     Data.ZoomCache.PCM
     Data.ZoomCache.PCM.Double
     Data.ZoomCache.PCM.Int
+    Data.ZoomCache.PCM.Internal
     Data.ZoomCache.PCM.Types
   
   -- Modules not exported by this package.
