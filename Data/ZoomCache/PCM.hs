@@ -4,8 +4,8 @@ module Data.ZoomCache.PCM (
     -- * PCM Type
       PCM(..)
 
-    -- * Track mappings
-    , pcmMappings
+    -- * Track type identifiers
+    , pcmIdentifiers
 ) where
 
 import Data.ZoomCache.PCM.Types
@@ -16,8 +16,8 @@ import Data.ZoomCache.PCM.Int()
 import Data.ByteString (ByteString)
 import Data.ZoomCache.Codec (TrackType, identifyTrackType)
 
-pcmMappings :: [ByteString -> Maybe TrackType]
-pcmMappings =
+pcmIdentifiers :: [ByteString -> Maybe TrackType]
+pcmIdentifiers =
     [ identifyTrackType (undefined :: PCM Float)
     , identifyTrackType (undefined :: PCM Double)
     , identifyTrackType (undefined :: PCM Int)
