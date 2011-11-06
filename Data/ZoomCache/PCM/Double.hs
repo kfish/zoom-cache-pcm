@@ -188,6 +188,37 @@ typeOfSummaryPCMDouble _ = mkTyConApp tyCon [d,d,d,d]
 ----------------------------------------------------------------------
 -- Write
 
+instance ZoomWrite (PCM Float) where
+    write = writeData
+
+instance ZoomWrite (TimeStamp, PCM Float) where
+    write = writeDataVBR
+
+instance ZoomWritable (PCM Float) where
+    data SummaryWork (PCM Float) = SummaryWorkPCMFloat
+        { swPCMFloatTime  :: {-# UNPACK #-}!TimeStamp
+        , swPCMFloatMin   :: {-# UNPACK #-}!Float
+        , swPCMFloatMax   :: {-# UNPACK #-}!Float
+        , swPCMFloatSum   :: {-# UNPACK #-}!Float
+        , swPCMFloatSumSq :: {-# UNPACK #-}!Float
+        }
+    fromRaw           = fromFloat . unPCM
+    fromSummaryData   = fromSummaryPCMFloat
+
+    initSummaryWork   = initSummaryPCMFloat
+    toSummaryData     = mkSummaryPCMFloat
+    updateSummaryData = updateSummaryPCM
+    appendSummaryData = appendSummaryPCMFloat
+
+instance ZoomPCMWritable Float where
+    pcmWorkTime = swPCMFloatTime
+    pcmWorkMin = swPCMFloatMin
+    pcmWorkMax = swPCMFloatMax
+    pcmWorkSum = swPCMFloatSum
+    pcmWorkSumSq = swPCMFloatSumSq
+
+    pcmMkSummaryWork = SummaryWorkPCMFloat
+
 instance ZoomWrite (PCM Double) where
     write = writeData
 
@@ -238,13 +269,13 @@ mkSummaryPCMFloat dur sw =
     where
         !dur' = realToFrac dur
 
+fromSummaryPCMFloat :: SummaryData (PCM Float) -> Builder
+fromSummaryPCMFloat s = mconcat $ map fromFloat
+    [ pcmMin s , pcmMax s , pcmAvg s , pcmRMS s ]
+
 fromSummaryPCMDouble :: SummaryData (PCM Double) -> Builder
 fromSummaryPCMDouble s = mconcat $ map fromDouble
-    [ pcmMin s
-    , pcmMax s
-    , pcmAvg s
-    , pcmRMS s
-    ]
+    [ pcmMin s , pcmMax s , pcmAvg s , pcmRMS s ]
 
 updateSummaryPCM :: (Ord a, Num a,
                      ZoomPCMReadable a, ZoomPCMWritable a)
