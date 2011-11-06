@@ -50,21 +50,26 @@ module Data.ZoomCache.PCM.Int (
 
 import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
-import Control.Monad (replicateM)
 import Control.Monad.Trans (MonadIO)
-import qualified Data.ByteString as B
+import Data.ByteString (ByteString)
 import Data.Iteratee (Iteratee)
-import qualified Data.Iteratee as I
-import qualified Data.ListLike as LL
 import Data.Monoid
 import Data.Word
 import Text.Printf
 
 import Data.ZoomCache.Codec
+import Data.ZoomCache.PCM.Internal
 import Data.ZoomCache.PCM.Types
 
 ----------------------------------------------------------------------
 -- Read
+
+instance ZoomPCMReadable Int where
+    pcmMin = summaryIntMin
+    pcmMax = summaryIntMax
+    pcmAvg = summaryIntAvg
+    pcmRMS = summaryIntRMS
+    pcmMkSummary = SummaryPCMInt
 
 instance ZoomReadable (PCM Int) where
     data SummaryData (PCM Int) = SummaryPCMInt
@@ -77,38 +82,25 @@ instance ZoomReadable (PCM Int) where
     trackIdentifier = const "ZPCMi32b"
 
     readRaw     = PCM <$> readInt32be
-    readSummary = readSummaryPCMInt
+    readSummary = readSummaryPCM
 
     prettyRaw         = prettyPacketPCMInt
     prettySummaryData = prettySummaryPCMInt
 
-prettyPacketPCMInt :: PCM Int -> String
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Int)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Int)) #-}
+
+----------------------------------------------------------------------
+
+prettyPacketPCMInt :: Show a => PCM a -> String
 prettyPacketPCMInt = show . unPCM
 
-readSummaryPCMInt :: (I.Nullable s, LL.ListLike s Word8, Functor m, MonadIO m)
-                  => Iteratee s m (SummaryData (PCM Int))
-readSummaryPCMInt = do
-    [mn,mx]   <- replicateM 2 readInt32be
-    [avg,rms] <- replicateM 2 readDouble64be
-    return (SummaryPCMInt mn mx avg rms)
-{-# SPECIALIZE INLINE readSummaryPCMInt :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Int)) #-}
-{-# SPECIALIZE INLINE readSummaryPCMInt :: (Functor m, MonadIO m) => Iteratee B.ByteString m (SummaryData (PCM Int)) #-}
-
-prettySummaryPCMInt :: SummaryData (PCM Int) -> String
-prettySummaryPCMInt SummaryPCMInt{..} = concat
-    [ printf "\tmin: %d\tmax: %d\t" summaryIntMin summaryIntMax
-    , printf "avg: %.3f\trms: %.3f" summaryIntAvg summaryIntRMS
+prettySummaryPCMInt :: (PrintfArg a, ZoomPCMReadable a)
+                    => SummaryData (PCM a) -> String
+prettySummaryPCMInt s = concat
+    [ printf "\tmin: %d\tmax: %d\t" (pcmMin s) (pcmMax s)
+    , printf "avg: %.3f\trms: %.3f" (pcmAvg s) (pcmRMS s)
     ]
-
-{-
-    typeOfSummaryData = typeOfSummaryPCMInt
-
-typeOfSummaryPCMInt :: SummaryData (PCM Int) -> TypeRep
-typeOfSummaryPCMInt _ = mkTyConApp tyCon [i,i,i,i]
-    where
-        tyCon = mkTyCon3 "zoom-cache" "Data.ZoomCache.Types" "SummaryPCMInt"
-        i = typeOf (undefined :: Int)
--}
 
 ----------------------------------------------------------------------
 -- Write

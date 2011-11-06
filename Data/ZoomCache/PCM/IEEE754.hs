@@ -71,12 +71,9 @@ module Data.ZoomCache.PCM.IEEE754 (
 
 import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
-import Control.Monad (replicateM)
 import Control.Monad.Trans (MonadIO)
-import qualified Data.ByteString as B
+import Data.ByteString (ByteString)
 import Data.Iteratee (Iteratee)
-import qualified Data.Iteratee as I
-import qualified Data.ListLike as LL
 import Data.Monoid
 import Data.Word
 import Text.Printf
@@ -101,17 +98,22 @@ instance ZoomReadable (PCM Float) where
     data SummaryData (PCM Float) = SummaryPCMFloat
         { summaryPCMFloatMin   :: {-# UNPACK #-}!Float
         , summaryPCMFloatMax   :: {-# UNPACK #-}!Float
-        , summaryPCMFloatAvg   :: {-# UNPACK #-}!Float
-        , summaryPCMFloatRMS   :: {-# UNPACK #-}!Float
+        , summaryPCMFloatAvg   :: {-# UNPACK #-}!Double
+        , summaryPCMFloatRMS   :: {-# UNPACK #-}!Double
         }
 
     trackIdentifier = const "ZPCMf32b"
 
     readRaw     = PCM <$> readFloat32be
-    readSummary = readSummaryPCMFloat
+    readSummary = readSummaryPCM
 
     prettyRaw         = prettyPacketPCMFloat
     prettySummaryData = prettySummaryPCMFloat
+
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Float)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Float)) #-}
+
+----------------------------------------------------------------------
 
 instance ZoomPCMReadable Double where
     pcmMin = summaryPCMDoubleMin
@@ -131,23 +133,18 @@ instance ZoomReadable (PCM Double) where
     trackIdentifier = const "ZPCMf64b"
 
     readRaw     = PCM <$> readDouble64be
-    readSummary = readSummaryPCMFloat
+    readSummary = readSummaryPCM
 
     prettyRaw         = prettyPacketPCMFloat
     prettySummaryData = prettySummaryPCMFloat
 
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Double)) #-}
+
+----------------------------------------------------------------------
+
 prettyPacketPCMFloat :: PrintfArg a => PCM a -> String
 prettyPacketPCMFloat = printf "%.3f" . unPCM
-
-readSummaryPCMFloat :: (I.Nullable s, LL.ListLike s Word8,
-                         Functor m, MonadIO m,
-                         ZoomReadable (PCM a), ZoomPCMReadable a)
-                     => Iteratee s m (SummaryData (PCM a))
-readSummaryPCMFloat = do
-    [mn,mx,avg,rms] <- replicateM 4 (unPCM <$> readRaw)
-    return (pcmMkSummary mn mx avg rms)
-{-# SPECIALIZE INLINE readSummaryPCMFloat :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
-{-# SPECIALIZE INLINE readSummaryPCMFloat :: (Functor m, MonadIO m) => Iteratee B.ByteString m (SummaryData (PCM Double)) #-}
 
 prettySummaryPCMFloat :: (PrintfArg a, ZoomPCMReadable a)
                       => SummaryData (PCM a) -> String
@@ -155,16 +152,6 @@ prettySummaryPCMFloat s = concat
     [ printf "\tmin: %.3f\tmax: %.3f\t" (pcmMin s) (pcmMax s)
     , printf "avg: %.3f\trms: %.3f" (pcmAvg s) (pcmRMS s)
     ]
-
-{-
-    typeOfSummaryData = typeOfSummaryPCMDouble
-
-typeOfSummaryPCMDouble :: SummaryData (PCM Double) -> TypeRep
-typeOfSummaryPCMDouble _ = mkTyConApp tyCon [d,d,d,d]
-    where
-        tyCon = mkTyCon3 "zoom-cache" "Data.ZoomCache.Types" "SummaryPCMDouble"
-        d = typeOf (undefined :: Double)
--}
 
 ----------------------------------------------------------------------
 -- Write
@@ -180,15 +167,15 @@ instance ZoomWritable (PCM Float) where
         { swPCMFloatTime  :: {-# UNPACK #-}!TimeStamp
         , swPCMFloatMin   :: {-# UNPACK #-}!Float
         , swPCMFloatMax   :: {-# UNPACK #-}!Float
-        , swPCMFloatSum   :: {-# UNPACK #-}!Float
-        , swPCMFloatSumSq :: {-# UNPACK #-}!Float
+        , swPCMFloatSum   :: {-# UNPACK #-}!Double
+        , swPCMFloatSumSq :: {-# UNPACK #-}!Double
         }
     fromRaw           = fromFloat . unPCM
     fromSummaryData   = fromSummaryPCMFloat
 
     initSummaryWork   = initSummaryPCMFloat
     toSummaryData     = mkSummaryPCMFloat
-    updateSummaryData = updateSummaryPCM
+    updateSummaryData = updateSummaryPCMFloat
     appendSummaryData = appendSummaryPCMFloat
 
 instance ZoomPCMWritable Float where
@@ -219,7 +206,7 @@ instance ZoomWritable (PCM Double) where
 
     initSummaryWork   = initSummaryPCMFloat
     toSummaryData     = mkSummaryPCMFloat
-    updateSummaryData = updateSummaryPCM
+    updateSummaryData = updateSummaryPCMFloat
     appendSummaryData = appendSummaryPCMFloat
 
 instance ZoomPCMWritable Double where
@@ -245,18 +232,30 @@ mkSummaryPCMFloat :: (Floating a, ZoomPCMReadable a, ZoomPCMWritable a)
                   -> SummaryData (PCM a)
 mkSummaryPCMFloat dur sw =
     pcmMkSummary (pcmWorkMin sw) (pcmWorkMax sw)
-                 (pcmWorkSum sw / dur')
-                 (sqrt $ pcmWorkSumSq sw / dur')
-    where
-        !dur' = realToFrac dur
+                 (realToFrac (pcmWorkSum sw) / dur)
+                 (sqrt $ pcmWorkSumSq sw / dur)
 
 fromSummaryPCMFloat :: SummaryData (PCM Float) -> Builder
-fromSummaryPCMFloat s = mconcat $ map fromFloat
-    [ pcmMin s , pcmMax s , pcmAvg s , pcmRMS s ]
+fromSummaryPCMFloat s = mconcat $
+    map fromFloat [pcmMin s, pcmMax s] ++
+    map fromDouble [pcmAvg s, pcmRMS s]
 
 fromSummaryPCMDouble :: SummaryData (PCM Double) -> Builder
 fromSummaryPCMDouble s = mconcat $ map fromDouble
     [ pcmMin s , pcmMax s , pcmAvg s , pcmRMS s ]
+
+updateSummaryPCMFloat :: (Ord a, Real a,
+                          ZoomPCMReadable a, ZoomPCMWritable a)
+                      => TimeStamp -> PCM a
+                      -> SummaryWork (PCM a)
+                      -> SummaryWork (PCM a)
+updateSummaryPCMFloat t (PCM d) sw =
+    pcmMkSummaryWork t (min (pcmWorkMin sw) d)
+                       (max (pcmWorkMax sw) d)
+                       ((pcmWorkSum sw) + realToFrac (d * dur))
+                       ((pcmWorkSumSq sw) + realToFrac (d*d * dur))
+    where
+        !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
 
 appendSummaryPCMFloat :: (Ord a, Floating a, ZoomPCMReadable a)
                       => Double -> SummaryData (PCM a)
@@ -265,12 +264,10 @@ appendSummaryPCMFloat :: (Ord a, Floating a, ZoomPCMReadable a)
 appendSummaryPCMFloat dur1 s1 dur2 s2 = pcmMkSummary
     (min (pcmMin s1) (pcmMin s2))
     (max (pcmMax s1) (pcmMax s2))
-    (((pcmAvg s1 * dur1') + (pcmAvg s2 * dur2')) / durSum)
-    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1') +
-             (pcmRMS s2 * pcmRMS s2 * dur2')) /
+    (((pcmAvg s1 * dur1) + (pcmAvg s2 * dur2)) / durSum)
+    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1) +
+             (pcmRMS s2 * pcmRMS s2 * dur2)) /
             durSum)
     where
-        !dur1' = realToFrac dur1
-        !dur2' = realToFrac dur2
         !durSum = realToFrac $ dur1 + dur2
 
