@@ -157,26 +157,38 @@ instance ZoomWritable (PCM Double) where
     fromRaw           = fromDouble . unPCM
     fromSummaryData   = fromSummaryPCMDouble
 
-    initSummaryWork   = initSummaryPCMDouble
-    toSummaryData     = mkSummaryPCMDouble
-    updateSummaryData = updateSummaryPCMDouble
-    appendSummaryData = appendSummaryPCMDouble
+    initSummaryWork   = initSummaryPCMFloat
+    toSummaryData     = mkSummaryPCMFloat
+    updateSummaryData = updateSummaryPCM
+    appendSummaryData = appendSummaryPCMFloat
 
-initSummaryPCMDouble :: TimeStamp -> SummaryWork (PCM Double)
-initSummaryPCMDouble entry = SummaryWorkPCMDouble
-    { swPCMDoubleTime = entry
-    , swPCMDoubleMin = 1000.0 -- floatMax
-    , swPCMDoubleMax = -1000.0 -- negate floatMax
-    , swPCMDoubleSum = 0.0
-    , swPCMDoubleSumSq = 0.0
-    }
+instance ZoomPCMWritable Double where
+    pcmWorkTime = swPCMDoubleTime
+    pcmWorkMin = swPCMDoubleMin
+    pcmWorkMax = swPCMDoubleMax
+    pcmWorkSum = swPCMDoubleSum
+    pcmWorkSumSq = swPCMDoubleSumSq
 
-mkSummaryPCMDouble :: Double -> SummaryWork (PCM Double)
-                   -> SummaryData (PCM Double)
-mkSummaryPCMDouble dur SummaryWorkPCMDouble{..} =
-    pcmMkSummary swPCMDoubleMin swPCMDoubleMax
-                 (swPCMDoubleSum / dur)
-                 (sqrt $ swPCMDoubleSumSq / dur)
+    pcmMkSummaryWork = SummaryWorkPCMDouble
+
+initSummaryPCMFloat :: (Fractional a, ZoomPCMWritable a)
+                    => TimeStamp -> SummaryWork (PCM a)
+initSummaryPCMFloat entry = pcmMkSummaryWork
+    entry
+    1000.0 -- floatMax
+    (-1000.0) -- negate floatMax
+    0.0
+    0.0
+
+mkSummaryPCMFloat :: (Floating a, ZoomPCMReadable a, ZoomPCMWritable a)
+                  => Double -> SummaryWork (PCM a)
+                  -> SummaryData (PCM a)
+mkSummaryPCMFloat dur sw =
+    pcmMkSummary (pcmWorkMin sw) (pcmWorkMax sw)
+                 (pcmWorkSum sw / dur')
+                 (sqrt $ pcmWorkSumSq sw / dur')
+    where
+        !dur' = realToFrac dur
 
 fromSummaryPCMDouble :: SummaryData (PCM Double) -> Builder
 fromSummaryPCMDouble s = mconcat $ map fromDouble
@@ -186,29 +198,32 @@ fromSummaryPCMDouble s = mconcat $ map fromDouble
     , pcmRMS s
     ]
 
-updateSummaryPCMDouble :: TimeStamp -> PCM Double
-                       -> SummaryWork (PCM Double)
-                       -> SummaryWork (PCM Double)
-updateSummaryPCMDouble t (PCM d) SummaryWorkPCMDouble{..} = SummaryWorkPCMDouble
-    { swPCMDoubleTime = t
-    , swPCMDoubleMin = min swPCMDoubleMin d
-    , swPCMDoubleMax = max swPCMDoubleMax d
-    , swPCMDoubleSum = swPCMDoubleSum + (d * dur)
-    , swPCMDoubleSumSq = swPCMDoubleSumSq + (d*d * dur)
-    }
+updateSummaryPCM :: (Ord a, Num a,
+                     ZoomPCMReadable a, ZoomPCMWritable a)
+                 => TimeStamp -> PCM a
+                 -> SummaryWork (PCM a)
+                 -> SummaryWork (PCM a)
+updateSummaryPCM t (PCM d) sw =
+    pcmMkSummaryWork t (min (pcmWorkMin sw) d)
+                       (max (pcmWorkMax sw) d)
+                       ((pcmWorkSum sw) + (d * dur))
+                       ((pcmWorkSumSq sw) + (d*d * dur))
     where
-        !dur = fromIntegral $ (unTS t) - (unTS swPCMDoubleTime)
+        !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
 
-appendSummaryPCMDouble :: Double -> SummaryData (PCM Double)
-                       -> Double -> SummaryData (PCM Double)
-                       -> SummaryData (PCM Double)
-appendSummaryPCMDouble dur1 s1 dur2 s2 = pcmMkSummary
+appendSummaryPCMFloat :: (Ord a, Floating a, ZoomPCMReadable a)
+                      => Double -> SummaryData (PCM a)
+                      -> Double -> SummaryData (PCM a)
+                      -> SummaryData (PCM a)
+appendSummaryPCMFloat dur1 s1 dur2 s2 = pcmMkSummary
     (min (pcmMin s1) (pcmMin s2))
     (max (pcmMax s1) (pcmMax s2))
-    (((pcmAvg s1 * dur1) + (pcmAvg s2 * dur2)) / durSum)
-    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1) +
-             (pcmRMS s2 * pcmRMS s2 * dur2)) /
+    (((pcmAvg s1 * dur1') + (pcmAvg s2 * dur2')) / durSum)
+    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1') +
+             (pcmRMS s2 * pcmRMS s2 * dur2')) /
             durSum)
     where
-        !durSum = dur1 + dur2
+        !dur1' = realToFrac dur1
+        !dur2' = realToFrac dur2
+        !durSum = realToFrac $ dur1 + dur2
 
