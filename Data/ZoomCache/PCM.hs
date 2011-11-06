@@ -18,6 +18,7 @@ import Data.ZoomCache.Codec (TrackType, identifyTrackType)
 
 pcmMappings :: [ByteString -> Maybe TrackType]
 pcmMappings =
-    [ identifyTrackType (undefined :: PCM Double)
+    [ identifyTrackType (undefined :: PCM Float)
+    , identifyTrackType (undefined :: PCM Double)
     , identifyTrackType (undefined :: PCM Int)
     ]
