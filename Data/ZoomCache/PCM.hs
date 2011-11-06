@@ -10,7 +10,7 @@ module Data.ZoomCache.PCM (
 
 import Data.ZoomCache.PCM.Types
 
-import Data.ZoomCache.PCM.Double()
+import Data.ZoomCache.PCM.IEEE754()
 import Data.ZoomCache.PCM.Int()
 
 import Data.ByteString (ByteString)
