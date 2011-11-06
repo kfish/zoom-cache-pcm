@@ -71,7 +71,25 @@ import Data.ZoomCache.PCM.Types
 -- import Numeric.FloatMinMax
 
 ----------------------------------------------------------------------
+-- ZoomPCMReadable
+
+class ZoomReadable (PCM a) => ZoomPCMReadable a where
+    pcmMin :: SummaryData (PCM a) -> a
+    pcmMax :: SummaryData (PCM a) -> a
+    pcmAvg :: SummaryData (PCM a) -> a
+    pcmRMS :: SummaryData (PCM a) -> a
+
+    pcmMkSummary :: a -> a -> a -> a -> SummaryData (PCM a)
+
+----------------------------------------------------------------------
 -- Read
+
+instance ZoomPCMReadable Double where
+    pcmMin = summaryPCMDoubleMin
+    pcmMax = summaryPCMDoubleMax
+    pcmAvg = summaryPCMDoubleAvg
+    pcmRMS = summaryPCMDoubleRMS
+    pcmMkSummary = SummaryPCMDouble
 
 instance ZoomReadable (PCM Double) where
     data SummaryData (PCM Double) = SummaryPCMDouble
@@ -84,26 +102,29 @@ instance ZoomReadable (PCM Double) where
     trackIdentifier = const "ZPCMf64b"
 
     readRaw     = PCM <$> readDouble64be
-    readSummary = readSummaryPCMDouble
+    readSummary = readSummaryPCMFloat
 
-    prettyRaw         = prettyPacketPCMDouble
-    prettySummaryData = prettySummaryPCMDouble
+    prettyRaw         = prettyPacketPCMFloat
+    prettySummaryData = prettySummaryPCMFloat
 
-prettyPacketPCMDouble :: PCM Double -> String
-prettyPacketPCMDouble = printf "%.3f" . unPCM
+prettyPacketPCMFloat :: PrintfArg a => PCM a -> String
+prettyPacketPCMFloat = printf "%.3f" . unPCM
 
-readSummaryPCMDouble :: (I.Nullable s, LL.ListLike s Word8, Functor m, MonadIO m)
-                     => Iteratee s m (SummaryData (PCM Double))
-readSummaryPCMDouble = do
-    [mn,mx,avg,rms] <- replicateM 4 readDouble64be
-    return (SummaryPCMDouble mn mx avg rms)
-{-# SPECIALIZE INLINE readSummaryPCMDouble :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
-{-# SPECIALIZE INLINE readSummaryPCMDouble :: (Functor m, MonadIO m) => Iteratee B.ByteString m (SummaryData (PCM Double)) #-}
+readSummaryPCMFloat :: (I.Nullable s, LL.ListLike s Word8,
+                         Functor m, MonadIO m,
+                         ZoomReadable (PCM a), ZoomPCMReadable a)
+                     => Iteratee s m (SummaryData (PCM a))
+readSummaryPCMFloat = do
+    [mn,mx,avg,rms] <- replicateM 4 (unPCM <$> readRaw)
+    return (pcmMkSummary mn mx avg rms)
+{-# SPECIALIZE INLINE readSummaryPCMFloat :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
+{-# SPECIALIZE INLINE readSummaryPCMFloat :: (Functor m, MonadIO m) => Iteratee B.ByteString m (SummaryData (PCM Double)) #-}
 
-prettySummaryPCMDouble :: SummaryData (PCM Double) -> String
-prettySummaryPCMDouble SummaryPCMDouble{..} = concat
-    [ printf "\tmin: %.3f\tmax: %.3f\t" summaryPCMDoubleMin summaryPCMDoubleMax
-    , printf "avg: %.3f\trms: %.3f" summaryPCMDoubleAvg summaryPCMDoubleRMS
+prettySummaryPCMFloat :: (PrintfArg a, ZoomPCMReadable a)
+                      => SummaryData (PCM a) -> String
+prettySummaryPCMFloat s = concat
+    [ printf "\tmin: %.3f\tmax: %.3f\t" (pcmMin s) (pcmMax s)
+    , printf "avg: %.3f\trms: %.3f" (pcmAvg s) (pcmRMS s)
     ]
 
 {-
