@@ -155,18 +155,18 @@ fromSummaryPCMInt SummaryPCMInt{..} = mconcat $ map fromIntegral32be
     , summaryIntRMS
     ]
 
-updateSummaryPCMInt :: TimeStamp -> PCM Int
-                    -> SummaryWork (PCM Int)
-                    -> SummaryWork (PCM Int)
-updateSummaryPCMInt t (PCM i) SummaryWorkPCMInt{..} = SummaryWorkPCMInt
-    { swPCMIntTime = t
-    , swPCMIntMin = min swPCMIntMin i
-    , swPCMIntMax = max swPCMIntMax i
-    , swPCMIntSum = swPCMIntSum + fromIntegral (i * dur)
-    , swPCMIntSumSq = swPCMIntSumSq + fromIntegral (i*i * dur)
-    }
+updateSummaryPCMInt :: (Ord a, Integral a,
+                        ZoomPCMReadable a, ZoomPCMWritable a)
+                    => TimeStamp -> PCM a
+                    -> SummaryWork (PCM a)
+                    -> SummaryWork (PCM a)
+updateSummaryPCMInt t (PCM d) sw =
+    pcmMkSummaryWork t (min (pcmWorkMin sw) d)
+                       (max (pcmWorkMax sw) d)
+                       ((pcmWorkSum sw) + fromIntegral (d * dur))
+                       ((pcmWorkSumSq sw) + fromIntegral (d*d * dur))
     where
-        !dur = fromIntegral $ (unTS t) - (unTS swPCMIntTime)
+        !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
 
 appendSummaryPCMInt :: Double -> SummaryData (PCM Int)
                  -> Double -> SummaryData (PCM Int)
