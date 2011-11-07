@@ -116,7 +116,7 @@ instance ZoomWritable (PCM Int) where
         { swPCMIntTime  :: {-# UNPACK #-}!TimeStamp
         , swPCMIntMin   :: {-# UNPACK #-}!Int
         , swPCMIntMax   :: {-# UNPACK #-}!Int
-        , swPCMIntSum   :: {-# UNPACK #-}!Int
+        , swPCMIntSum   :: {-# UNPACK #-}!Double
         , swPCMIntSumSq :: {-# UNPACK #-}!Double
         }
 
@@ -128,6 +128,14 @@ instance ZoomWritable (PCM Int) where
     updateSummaryData = updateSummaryPCMInt
     appendSummaryData = appendSummaryPCMInt
 
+instance ZoomPCMWritable Int where
+    pcmWorkTime = swPCMIntTime
+    pcmWorkMin = swPCMIntMin
+    pcmWorkMax = swPCMIntMax
+    pcmWorkSum = swPCMIntSum
+    pcmWorkSumSq = swPCMIntSumSq
+    pcmMkSummaryWork = SummaryWorkPCMInt
+
 initSummaryPCMInt :: TimeStamp -> SummaryWork (PCM Int)
 initSummaryPCMInt entry = SummaryWorkPCMInt
     { swPCMIntTime = entry
@@ -137,13 +145,13 @@ initSummaryPCMInt entry = SummaryWorkPCMInt
     , swPCMIntSumSq = 0
     }
 
-mkSummaryPCMInt :: Double -> SummaryWork (PCM Int) -> SummaryData (PCM Int)
-mkSummaryPCMInt dur SummaryWorkPCMInt{..} = SummaryPCMInt
-    { summaryIntMin = swPCMIntMin
-    , summaryIntMax = swPCMIntMax
-    , summaryIntAvg = fromIntegral swPCMIntSum / dur
-    , summaryIntRMS = sqrt $ swPCMIntSumSq / dur
-    }
+mkSummaryPCMInt :: (Integral a, ZoomPCMReadable a, ZoomPCMWritable a)
+                => Double -> SummaryWork (PCM a)
+                -> SummaryData (PCM a)
+mkSummaryPCMInt dur sw =
+    pcmMkSummary (pcmWorkMin sw) (pcmWorkMax sw)
+                 (pcmWorkSum sw / dur)
+                 (sqrt $ (pcmWorkSumSq sw) / dur)
 
 fromSummaryPCMInt :: SummaryData (PCM Int) -> Builder
 fromSummaryPCMInt SummaryPCMInt{..} = mconcat $ map fromIntegral32be
@@ -161,7 +169,7 @@ updateSummaryPCMInt t (PCM i) SummaryWorkPCMInt{..} = SummaryWorkPCMInt
     { swPCMIntTime = t
     , swPCMIntMin = min swPCMIntMin i
     , swPCMIntMax = max swPCMIntMax i
-    , swPCMIntSum = swPCMIntSum + (i * dur)
+    , swPCMIntSum = swPCMIntSum + fromIntegral (i * dur)
     , swPCMIntSumSq = swPCMIntSumSq + fromIntegral (i*i * dur)
     }
     where
