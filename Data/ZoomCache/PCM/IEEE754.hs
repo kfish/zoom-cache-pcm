@@ -80,7 +80,6 @@ import Text.Printf
 import Data.ZoomCache.Codec
 import Data.ZoomCache.PCM.Internal
 import Data.ZoomCache.PCM.Types
--- import Numeric.FloatMinMax
 
 ----------------------------------------------------------------------
 -- Float
@@ -227,11 +226,11 @@ prettySummaryPCMFloat s = concat
     , printf "avg: %.3f\trms: %.3f" (pcmAvg s) (pcmRMS s)
     ]
 
-initSummaryPCMFloat :: (Fractional a, ZoomPCM a)
+initSummaryPCMFloat :: (RealFloat a, ZoomPCM a)
                     => TimeStamp -> SummaryWork (PCM a)
 initSummaryPCMFloat entry = pcmMkSummaryWork
     entry
-    1000.0 -- floatMax
-    (-1000.0) -- negate floatMax
+    floatMax
+    (negate floatMax)
     0.0
     0.0
