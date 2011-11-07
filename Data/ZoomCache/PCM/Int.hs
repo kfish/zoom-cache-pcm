@@ -31,13 +31,11 @@ The table below describes the encoding of SummaryData for PCM.Int.
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    | RMS (int32)                                                   | 48-51
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
 @
 
 Field encoding formats:
 
   @int32@:  32bit big endian
-
   @double@: big-endian IEEE 754-2008 binary64 (IEEE 754-1985 double)
 
 -}
