@@ -26,7 +26,7 @@ import Data.ZoomCache.PCM.Types
 
 readSummaryPCM :: (I.Nullable s, LL.ListLike s Word8,
                    Functor m, MonadIO m,
-                   ZoomReadable (PCM a), ZoomPCMReadable a)
+                   ZoomPCM a)
                => Iteratee s m (SummaryData (PCM a))
 readSummaryPCM = do
     [mn,mx] <- replicateM 2 (unPCM <$> readRaw)
@@ -34,12 +34,12 @@ readSummaryPCM = do
     return (pcmMkSummary mn mx avg rms)
 {-# INLINABLE readSummaryPCM #-}
 
-initSummaryPCMBounded :: (Bounded a, ZoomPCMWritable a)
+initSummaryPCMBounded :: (Bounded a, ZoomPCM a)
                       => TimeStamp -> SummaryWork (PCM a)
 initSummaryPCMBounded entry = pcmMkSummaryWork entry maxBound minBound 0.0 0.0
 {-# INLINEABLE initSummaryPCMBounded #-}
 
-mkSummaryPCM :: (ZoomPCMReadable a, ZoomPCMWritable a)
+mkSummaryPCM :: ZoomPCM a
              => Double -> SummaryWork (PCM a)
              -> SummaryData (PCM a)
 mkSummaryPCM dur sw =
@@ -48,7 +48,7 @@ mkSummaryPCM dur sw =
                  (sqrt $ (pcmWorkSumSq sw) / dur)
 {-# INLINEABLE mkSummaryPCM #-}
 
-appendSummaryPCM :: (Ord a, ZoomPCMReadable a)
+appendSummaryPCM :: (Ord a, ZoomPCM a)
                  => Double -> SummaryData (PCM a)
                  -> Double -> SummaryData (PCM a)
                  -> SummaryData (PCM a)
@@ -63,8 +63,7 @@ appendSummaryPCM dur1 s1 dur2 s2 = pcmMkSummary
         !durSum = dur1 + dur2
 {-# INLINEABLE appendSummaryPCM #-}
 
-updateSummaryPCM :: (Ord a, Real a,
-                     ZoomPCMReadable a, ZoomPCMWritable a)
+updateSummaryPCM :: (Ord a, Real a, ZoomPCM a)
                  => TimeStamp -> PCM a
                  -> SummaryWork (PCM a)
                  -> SummaryWork (PCM a)

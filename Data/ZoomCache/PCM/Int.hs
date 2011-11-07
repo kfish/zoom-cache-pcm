@@ -64,13 +64,6 @@ import Data.ZoomCache.PCM.Types
 ----------------------------------------------------------------------
 -- Read
 
-instance ZoomPCMReadable Int where
-    pcmMin = summaryIntMin
-    pcmMax = summaryIntMax
-    pcmAvg = summaryIntAvg
-    pcmRMS = summaryIntRMS
-    pcmMkSummary = SummaryPCMInt
-
 instance ZoomReadable (PCM Int) where
     data SummaryData (PCM Int) = SummaryPCMInt
         { summaryIntMin   :: {-# UNPACK #-}!Int
@@ -95,7 +88,7 @@ instance ZoomReadable (PCM Int) where
 prettyPacketPCMInt :: Show a => PCM a -> String
 prettyPacketPCMInt = show . unPCM
 
-prettySummaryPCMInt :: (PrintfArg a, ZoomPCMReadable a)
+prettySummaryPCMInt :: (PrintfArg a, ZoomPCM a)
                     => SummaryData (PCM a) -> String
 prettySummaryPCMInt s = concat
     [ printf "\tmin: %d\tmax: %d\t" (pcmMin s) (pcmMax s)
@@ -128,12 +121,19 @@ instance ZoomWritable (PCM Int) where
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
 
-instance ZoomPCMWritable Int where
+instance ZoomPCM Int where
+    pcmMin = summaryIntMin
+    pcmMax = summaryIntMax
+    pcmAvg = summaryIntAvg
+    pcmRMS = summaryIntRMS
+
     pcmWorkTime = swPCMIntTime
     pcmWorkMin = swPCMIntMin
     pcmWorkMax = swPCMIntMax
     pcmWorkSum = swPCMIntSum
     pcmWorkSumSq = swPCMIntSumSq
+
+    pcmMkSummary = SummaryPCMInt
     pcmMkSummaryWork = SummaryWorkPCMInt
 
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int) #-}

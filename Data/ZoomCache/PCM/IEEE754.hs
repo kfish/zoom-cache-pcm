@@ -86,14 +86,6 @@ import Data.ZoomCache.PCM.Types
 ----------------------------------------------------------------------
 -- Read
 
-instance ZoomPCMReadable Float where
-    pcmMin = summaryPCMFloatMin
-    pcmMax = summaryPCMFloatMax
-    pcmAvg = summaryPCMFloatAvg
-    pcmRMS = summaryPCMFloatRMS
-
-    pcmMkSummary = SummaryPCMFloat
-
 instance ZoomReadable (PCM Float) where
     data SummaryData (PCM Float) = SummaryPCMFloat
         { summaryPCMFloatMin   :: {-# UNPACK #-}!Float
@@ -114,13 +106,6 @@ instance ZoomReadable (PCM Float) where
 {-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Float)) #-}
 
 ----------------------------------------------------------------------
-
-instance ZoomPCMReadable Double where
-    pcmMin = summaryPCMDoubleMin
-    pcmMax = summaryPCMDoubleMax
-    pcmAvg = summaryPCMDoubleAvg
-    pcmRMS = summaryPCMDoubleRMS
-    pcmMkSummary = SummaryPCMDouble
 
 instance ZoomReadable (PCM Double) where
     data SummaryData (PCM Double) = SummaryPCMDouble
@@ -146,7 +131,7 @@ instance ZoomReadable (PCM Double) where
 prettyPacketPCMFloat :: PrintfArg a => PCM a -> String
 prettyPacketPCMFloat = printf "%.3f" . unPCM
 
-prettySummaryPCMFloat :: (PrintfArg a, ZoomPCMReadable a)
+prettySummaryPCMFloat :: (PrintfArg a, ZoomPCM a)
                       => SummaryData (PCM a) -> String
 prettySummaryPCMFloat s = concat
     [ printf "\tmin: %.3f\tmax: %.3f\t" (pcmMin s) (pcmMax s)
@@ -178,13 +163,19 @@ instance ZoomWritable (PCM Float) where
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
 
-instance ZoomPCMWritable Float where
+instance ZoomPCM Float where
+    pcmMin = summaryPCMFloatMin
+    pcmMax = summaryPCMFloatMax
+    pcmAvg = summaryPCMFloatAvg
+    pcmRMS = summaryPCMFloatRMS
+
     pcmWorkTime = swPCMFloatTime
     pcmWorkMin = swPCMFloatMin
     pcmWorkMax = swPCMFloatMax
     pcmWorkSum = swPCMFloatSum
     pcmWorkSumSq = swPCMFloatSumSq
 
+    pcmMkSummary = SummaryPCMFloat
     pcmMkSummaryWork = SummaryWorkPCMFloat
 
 {-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Float) -> SummaryData (PCM Float) #-}
@@ -213,20 +204,26 @@ instance ZoomWritable (PCM Double) where
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
 
-instance ZoomPCMWritable Double where
+instance ZoomPCM Double where
+    pcmMin = summaryPCMDoubleMin
+    pcmMax = summaryPCMDoubleMax
+    pcmAvg = summaryPCMDoubleAvg
+    pcmRMS = summaryPCMDoubleRMS
+
     pcmWorkTime = swPCMDoubleTime
     pcmWorkMin = swPCMDoubleMin
     pcmWorkMax = swPCMDoubleMax
     pcmWorkSum = swPCMDoubleSum
     pcmWorkSumSq = swPCMDoubleSumSq
 
+    pcmMkSummary = SummaryPCMDouble
     pcmMkSummaryWork = SummaryWorkPCMDouble
 
 {-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Double) -> Double -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Double -> SummaryWork (PCM Double) -> SummaryWork (PCM Double) #-}
 
-initSummaryPCMFloat :: (Fractional a, ZoomPCMWritable a)
+initSummaryPCMFloat :: (Fractional a, ZoomPCM a)
                     => TimeStamp -> SummaryWork (PCM a)
 initSummaryPCMFloat entry = pcmMkSummaryWork
     entry

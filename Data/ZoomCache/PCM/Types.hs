@@ -7,8 +7,7 @@ module Data.ZoomCache.PCM.Types (
       PCM(..)
 
     -- * Classes
-    , ZoomPCMReadable(..)
-    , ZoomPCMWritable(..)
+    , ZoomPCM(..)
 ) where
 
 import Data.Typeable
@@ -21,23 +20,21 @@ data PCM a = PCM { unPCM :: !a }
     deriving (Typeable)
 
 ----------------------------------------------------------------------
--- ZoomPCMReadable, ZoomPCMWritable
+-- ZoomPCM
 
-class ZoomReadable (PCM a) => ZoomPCMReadable a where
+class (ZoomReadable (PCM a), ZoomWritable (PCM a)) => ZoomPCM a where
     pcmMin :: SummaryData (PCM a) -> a
     pcmMax :: SummaryData (PCM a) -> a
     pcmAvg :: SummaryData (PCM a) -> Double
     pcmRMS :: SummaryData (PCM a) -> Double
 
-    pcmMkSummary :: a -> a -> Double -> Double -> SummaryData (PCM a)
-
-class ZoomWritable (PCM a) => ZoomPCMWritable a where
     pcmWorkTime :: SummaryWork (PCM a) -> TimeStamp
     pcmWorkMin :: SummaryWork (PCM a) -> a
     pcmWorkMax :: SummaryWork (PCM a) -> a
     pcmWorkSum :: SummaryWork (PCM a) -> Double
     pcmWorkSumSq :: SummaryWork (PCM a) -> Double
 
+    pcmMkSummary :: a -> a -> Double -> Double -> SummaryData (PCM a)
     pcmMkSummaryWork :: TimeStamp -> a -> a -> Double -> Double
                      -> SummaryWork (PCM a)
 
