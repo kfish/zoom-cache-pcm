@@ -10,6 +10,7 @@ module Data.ZoomCache.PCM.Types (
     , ZoomPCM(..)
 ) where
 
+import Blaze.ByteString.Builder
 import Data.Typeable
 import Data.ZoomCache.Codec
 
@@ -23,6 +24,8 @@ data PCM a = PCM { unPCM :: !a }
 -- ZoomPCM
 
 class (ZoomReadable (PCM a), ZoomWritable (PCM a)) => ZoomPCM a where
+    pcmFromRaw :: a -> Builder
+
     pcmMin :: SummaryData (PCM a) -> a
     pcmMax :: SummaryData (PCM a) -> a
     pcmAvg :: SummaryData (PCM a) -> Double

@@ -53,7 +53,6 @@ import Control.Applicative ((<$>))
 import Control.Monad.Trans (MonadIO)
 import Data.ByteString (ByteString)
 import Data.Iteratee (Iteratee)
-import Data.Monoid
 import Data.Word
 import Text.Printf
 
@@ -113,8 +112,8 @@ instance ZoomWritable (PCM Int) where
         , swPCMIntSumSq :: {-# UNPACK #-}!Double
         }
 
-    fromRaw           = fromIntegral32be . unPCM
-    fromSummaryData   = fromSummaryPCMInt
+    fromRaw           = pcmFromRaw . unPCM
+    fromSummaryData   = fromSummaryPCM
 
     initSummaryWork   = initSummaryPCMBounded
     toSummaryData     = mkSummaryPCM
@@ -122,6 +121,8 @@ instance ZoomWritable (PCM Int) where
     appendSummaryData = appendSummaryPCM
 
 instance ZoomPCM Int where
+    pcmFromRaw = fromIntegral32be
+
     pcmMin = summaryIntMin
     pcmMax = summaryIntMax
     pcmAvg = summaryIntAvg
@@ -136,17 +137,8 @@ instance ZoomPCM Int where
     pcmMkSummary = SummaryPCMInt
     pcmMkSummaryWork = SummaryWorkPCMInt
 
+{-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int) -> Builder #-}
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int) #-}
 {-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Int) -> Double -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int -> SummaryWork (PCM Int) -> SummaryWork (PCM Int) #-}
-
-fromSummaryPCMInt :: SummaryData (PCM Int) -> Builder
-fromSummaryPCMInt SummaryPCMInt{..} = mconcat $ map fromIntegral32be
-    [ summaryIntMin
-    , summaryIntMax
-    ] ++ map fromDouble
-    [ summaryIntAvg
-    , summaryIntRMS
-    ]
-

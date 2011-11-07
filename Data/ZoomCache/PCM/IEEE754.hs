@@ -74,7 +74,6 @@ import Control.Applicative ((<$>))
 import Control.Monad.Trans (MonadIO)
 import Data.ByteString (ByteString)
 import Data.Iteratee (Iteratee)
-import Data.Monoid
 import Data.Word
 import Text.Printf
 
@@ -155,8 +154,8 @@ instance ZoomWritable (PCM Float) where
         , swPCMFloatSum   :: {-# UNPACK #-}!Double
         , swPCMFloatSumSq :: {-# UNPACK #-}!Double
         }
-    fromRaw           = fromFloat . unPCM
-    fromSummaryData   = fromSummaryPCMFloat
+    fromRaw           = pcmFromRaw . unPCM
+    fromSummaryData   = fromSummaryPCM
 
     initSummaryWork   = initSummaryPCMFloat
     toSummaryData     = mkSummaryPCM
@@ -164,6 +163,8 @@ instance ZoomWritable (PCM Float) where
     appendSummaryData = appendSummaryPCM
 
 instance ZoomPCM Float where
+    pcmFromRaw = fromFloat
+
     pcmMin = summaryPCMFloatMin
     pcmMax = summaryPCMFloatMax
     pcmAvg = summaryPCMFloatAvg
@@ -178,6 +179,7 @@ instance ZoomPCM Float where
     pcmMkSummary = SummaryPCMFloat
     pcmMkSummaryWork = SummaryWorkPCMFloat
 
+{-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Float) -> Builder #-}
 {-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Float) -> SummaryData (PCM Float) #-}
 {-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Float) -> Double -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Float -> SummaryWork (PCM Float) -> SummaryWork (PCM Float) #-}
@@ -196,8 +198,8 @@ instance ZoomWritable (PCM Double) where
         , swPCMDoubleSum   :: {-# UNPACK #-}!Double
         , swPCMDoubleSumSq :: {-# UNPACK #-}!Double
         }
-    fromRaw           = fromDouble . unPCM
-    fromSummaryData   = fromSummaryPCMDouble
+    fromRaw           = pcmFromRaw . unPCM
+    fromSummaryData   = fromSummaryPCM
 
     initSummaryWork   = initSummaryPCMFloat
     toSummaryData     = mkSummaryPCM
@@ -205,6 +207,8 @@ instance ZoomWritable (PCM Double) where
     appendSummaryData = appendSummaryPCM
 
 instance ZoomPCM Double where
+    pcmFromRaw = fromDouble
+
     pcmMin = summaryPCMDoubleMin
     pcmMax = summaryPCMDoubleMax
     pcmAvg = summaryPCMDoubleAvg
@@ -219,6 +223,7 @@ instance ZoomPCM Double where
     pcmMkSummary = SummaryPCMDouble
     pcmMkSummaryWork = SummaryWorkPCMDouble
 
+{-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Double) -> Builder #-}
 {-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Double) -> Double -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Double -> SummaryWork (PCM Double) -> SummaryWork (PCM Double) #-}
@@ -231,12 +236,3 @@ initSummaryPCMFloat entry = pcmMkSummaryWork
     (-1000.0) -- negate floatMax
     0.0
     0.0
-
-fromSummaryPCMFloat :: SummaryData (PCM Float) -> Builder
-fromSummaryPCMFloat s = mconcat $
-    map fromFloat [pcmMin s, pcmMax s] ++
-    map fromDouble [pcmAvg s, pcmRMS s]
-
-fromSummaryPCMDouble :: SummaryData (PCM Double) -> Builder
-fromSummaryPCMDouble s = mconcat $ map fromDouble
-    [ pcmMin s , pcmMax s , pcmAvg s , pcmRMS s ]

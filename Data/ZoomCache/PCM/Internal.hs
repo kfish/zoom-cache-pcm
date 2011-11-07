@@ -5,18 +5,21 @@
 module Data.ZoomCache.PCM.Internal (
     -- * Functions
       readSummaryPCM
+    , fromSummaryPCM
     , initSummaryPCMBounded
     , mkSummaryPCM
     , appendSummaryPCM
     , updateSummaryPCM
 ) where
 
+import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
 import Control.Monad (replicateM)
 import Control.Monad.Trans (MonadIO)
 import Data.Iteratee (Iteratee)
 import qualified Data.Iteratee as I
 import qualified Data.ListLike as LL
+import Data.Monoid
 import Data.Word
 
 import Data.ZoomCache.Codec
@@ -33,6 +36,12 @@ readSummaryPCM = do
     [avg,rms] <- replicateM 2 readDouble64be
     return (pcmMkSummary mn mx avg rms)
 {-# INLINABLE readSummaryPCM #-}
+
+fromSummaryPCM :: ZoomPCM a => SummaryData (PCM a) -> Builder
+fromSummaryPCM s = mconcat $
+    map pcmFromRaw [pcmMin s, pcmMax s] ++
+    map fromDouble [pcmAvg s, pcmRMS s]
+{-# INLINABLE fromSummaryPCM #-}
 
 initSummaryPCMBounded :: (Bounded a, ZoomPCM a)
                       => TimeStamp -> SummaryWork (PCM a)
