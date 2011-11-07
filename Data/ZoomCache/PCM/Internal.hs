@@ -49,25 +49,25 @@ initSummaryPCMBounded entry = pcmMkSummaryWork entry maxBound minBound 0.0 0.0
 {-# INLINEABLE initSummaryPCMBounded #-}
 
 mkSummaryPCM :: ZoomPCM a
-             => Double -> SummaryWork (PCM a)
+             => TimeStampDiff -> SummaryWork (PCM a)
              -> SummaryData (PCM a)
-mkSummaryPCM dur sw =
+mkSummaryPCM (TSDiff dur) sw =
     pcmMkSummary (pcmWorkMin sw) (pcmWorkMax sw)
-                 (pcmWorkSum sw / dur)
-                 (sqrt $ (pcmWorkSumSq sw) / dur)
+                 (pcmWorkSum sw / fromIntegral dur)
+                 (sqrt $ (pcmWorkSumSq sw) / fromIntegral dur)
 {-# INLINEABLE mkSummaryPCM #-}
 
 appendSummaryPCM :: (Ord a, ZoomPCM a)
-                 => Double -> SummaryData (PCM a)
-                 -> Double -> SummaryData (PCM a)
+                 => TimeStampDiff -> SummaryData (PCM a)
+                 -> TimeStampDiff -> SummaryData (PCM a)
                  -> SummaryData (PCM a)
-appendSummaryPCM dur1 s1 dur2 s2 = pcmMkSummary
+appendSummaryPCM (TSDiff dur1) s1 (TSDiff dur2) s2 = pcmMkSummary
     (min (pcmMin s1) (pcmMin s2))
     (max (pcmMax s1) (pcmMax s2))
-    (((pcmAvg s1 * dur1) + (pcmAvg s2 * dur2)) / durSum)
-    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1) +
-             (pcmRMS s2 * pcmRMS s2 * dur2)) /
-            durSum)
+    (((pcmAvg s1 * fromIntegral dur1) + (pcmAvg s2 * fromIntegral dur2)) / fromIntegral durSum)
+    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * fromIntegral dur1) +
+             (pcmRMS s2 * pcmRMS s2 * fromIntegral dur2)) /
+            fromIntegral durSum)
     where
         !durSum = dur1 + dur2
 {-# INLINEABLE appendSummaryPCM #-}

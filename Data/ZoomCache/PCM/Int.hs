@@ -137,6 +137,6 @@ instance ZoomPCM Int where
 
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int) -> Builder #-}
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int) #-}
-{-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Int) -> SummaryData (PCM Int) #-}
-{-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Int) -> Double -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
+{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int) -> SummaryData (PCM Int) #-}
+{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int) -> TimeStampDiff -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int -> SummaryWork (PCM Int) -> SummaryWork (PCM Int) #-}

@@ -144,8 +144,8 @@ instance ZoomPCM Float where
     pcmMkSummaryWork = SummaryWorkPCMFloat
 
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Float) -> Builder #-}
-{-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Float) -> SummaryData (PCM Float) #-}
-{-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Float) -> Double -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
+{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Float) -> SummaryData (PCM Float) #-}
+{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Float) -> TimeStampDiff -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Float -> SummaryWork (PCM Float) -> SummaryWork (PCM Float) #-}
 
 ----------------------------------------------------------------------
@@ -210,8 +210,8 @@ instance ZoomPCM Double where
     pcmMkSummaryWork = SummaryWorkPCMDouble
 
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Double) -> Builder #-}
-{-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
-{-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Double) -> Double -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
+{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
+{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Double) -> TimeStampDiff -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Double -> SummaryWork (PCM Double) -> SummaryWork (PCM Double) #-}
 
 ----------------------------------------------------------------------
