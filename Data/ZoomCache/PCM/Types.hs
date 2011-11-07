@@ -23,7 +23,7 @@ data PCM a = PCM { unPCM :: !a }
 ----------------------------------------------------------------------
 -- ZoomPCM
 
-class (ZoomReadable (PCM a), ZoomWritable (PCM a)) => ZoomPCM a where
+class (Ord a, Real a, ZoomReadable (PCM a), ZoomWritable (PCM a)) => ZoomPCM a where
     pcmFromRaw :: a -> Builder
 
     pcmMin :: SummaryData (PCM a) -> a

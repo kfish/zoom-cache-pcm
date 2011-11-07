@@ -37,7 +37,8 @@ readSummaryPCM = do
     return (pcmMkSummary mn mx avg rms)
 {-# INLINABLE readSummaryPCM #-}
 
-fromSummaryPCM :: ZoomPCM a => SummaryData (PCM a) -> Builder
+fromSummaryPCM :: ZoomPCM a
+               => SummaryData (PCM a) -> Builder
 fromSummaryPCM s = mconcat $
     map pcmFromRaw [pcmMin s, pcmMax s] ++
     map fromDouble [pcmAvg s, pcmRMS s]
@@ -57,7 +58,7 @@ mkSummaryPCM (TSDiff dur) sw =
                  (sqrt $ (pcmWorkSumSq sw) / fromIntegral dur)
 {-# INLINEABLE mkSummaryPCM #-}
 
-appendSummaryPCM :: (Ord a, ZoomPCM a)
+appendSummaryPCM :: ZoomPCM a
                  => TimeStampDiff -> SummaryData (PCM a)
                  -> TimeStampDiff -> SummaryData (PCM a)
                  -> SummaryData (PCM a)
@@ -72,7 +73,7 @@ appendSummaryPCM (TSDiff dur1) s1 (TSDiff dur2) s2 = pcmMkSummary
         !durSum = dur1 + dur2
 {-# INLINEABLE appendSummaryPCM #-}
 
-updateSummaryPCM :: (Ord a, Real a, ZoomPCM a)
+updateSummaryPCM :: ZoomPCM a
                  => TimeStamp -> PCM a
                  -> SummaryWork (PCM a)
                  -> SummaryWork (PCM a)
