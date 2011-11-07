@@ -168,19 +168,16 @@ updateSummaryPCMInt t (PCM d) sw =
     where
         !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
 
-appendSummaryPCMInt :: Double -> SummaryData (PCM Int)
-                 -> Double -> SummaryData (PCM Int)
-                 -> SummaryData (PCM Int)
-appendSummaryPCMInt dur1 s1 dur2 s2 = SummaryPCMInt
-    { summaryIntMin = min (summaryIntMin s1) (summaryIntMin s2)
-    , summaryIntMax = max (summaryIntMax s1) (summaryIntMax s2)
-    , summaryIntAvg = ((summaryIntAvg s1 * dur1) +
-                       (summaryIntAvg s2 * dur2)) /
-                      durSum
-    , summaryIntRMS = sqrt $ ((summaryIntRMS s1 * summaryIntRMS s1 * dur1) +
-                              (summaryIntRMS s2 * summaryIntRMS s2 * dur2)) /
-                             durSum
-    }
+appendSummaryPCMInt :: (Ord a, ZoomPCMReadable a)
+                    => Double -> SummaryData (PCM a)
+                    -> Double -> SummaryData (PCM a)
+                    -> SummaryData (PCM a)
+appendSummaryPCMInt dur1 s1 dur2 s2 = pcmMkSummary
+    (min (pcmMin s1) (pcmMin s2))
+    (max (pcmMax s1) (pcmMax s2))
+    (((pcmAvg s1 * dur1) + (pcmAvg s2 * dur2)) / durSum)
+    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1) +
+             (pcmRMS s2 * pcmRMS s2 * dur2)) /
+            durSum)
     where
         !durSum = dur1 + dur2
-
