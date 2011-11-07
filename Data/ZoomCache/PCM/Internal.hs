@@ -7,6 +7,7 @@ module Data.ZoomCache.PCM.Internal (
       readSummaryPCM
     , initSummaryPCMBounded
     , appendSummaryPCM
+    , updateSummaryPCM
 ) where
 
 import Control.Applicative ((<$>))
@@ -51,3 +52,17 @@ appendSummaryPCM dur1 s1 dur2 s2 = pcmMkSummary
     where
         !durSum = dur1 + dur2
 {-# INLINEABLE appendSummaryPCM #-}
+
+updateSummaryPCM :: (Ord a, Real a,
+                     ZoomPCMReadable a, ZoomPCMWritable a)
+                 => TimeStamp -> PCM a
+                 -> SummaryWork (PCM a)
+                 -> SummaryWork (PCM a)
+updateSummaryPCM t (PCM d) sw =
+    pcmMkSummaryWork t (min (pcmWorkMin sw) d)
+                       (max (pcmWorkMax sw) d)
+                       ((pcmWorkSum sw) + realToFrac (d * dur))
+                       ((pcmWorkSumSq sw) + realToFrac (d*d * dur))
+    where
+        !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
+{-# INLINEABLE updateSummaryPCM #-}

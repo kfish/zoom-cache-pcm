@@ -175,7 +175,7 @@ instance ZoomWritable (PCM Float) where
 
     initSummaryWork   = initSummaryPCMFloat
     toSummaryData     = mkSummaryPCMFloat
-    updateSummaryData = updateSummaryPCMFloat
+    updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
 
 instance ZoomPCMWritable Float where
@@ -208,7 +208,7 @@ instance ZoomWritable (PCM Double) where
 
     initSummaryWork   = initSummaryPCMFloat
     toSummaryData     = mkSummaryPCMFloat
-    updateSummaryData = updateSummaryPCMFloat
+    updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
 
 instance ZoomPCMWritable Double where
@@ -247,16 +247,3 @@ fromSummaryPCMFloat s = mconcat $
 fromSummaryPCMDouble :: SummaryData (PCM Double) -> Builder
 fromSummaryPCMDouble s = mconcat $ map fromDouble
     [ pcmMin s , pcmMax s , pcmAvg s , pcmRMS s ]
-
-updateSummaryPCMFloat :: (Ord a, Real a,
-                          ZoomPCMReadable a, ZoomPCMWritable a)
-                      => TimeStamp -> PCM a
-                      -> SummaryWork (PCM a)
-                      -> SummaryWork (PCM a)
-updateSummaryPCMFloat t (PCM d) sw =
-    pcmMkSummaryWork t (min (pcmWorkMin sw) d)
-                       (max (pcmWorkMax sw) d)
-                       ((pcmWorkSum sw) + realToFrac (d * dur))
-                       ((pcmWorkSumSq sw) + realToFrac (d*d * dur))
-    where
-        !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
