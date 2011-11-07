@@ -174,7 +174,7 @@ instance ZoomWritable (PCM Float) where
     fromSummaryData   = fromSummaryPCMFloat
 
     initSummaryWork   = initSummaryPCMFloat
-    toSummaryData     = mkSummaryPCMFloat
+    toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
 
@@ -187,7 +187,9 @@ instance ZoomPCMWritable Float where
 
     pcmMkSummaryWork = SummaryWorkPCMFloat
 
+{-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Float) -> SummaryData (PCM Float) #-}
 {-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Float) -> Double -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
+{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Float -> SummaryWork (PCM Float) -> SummaryWork (PCM Float) #-}
 
 instance ZoomWrite (PCM Double) where
     write = writeData
@@ -207,7 +209,7 @@ instance ZoomWritable (PCM Double) where
     fromSummaryData   = fromSummaryPCMDouble
 
     initSummaryWork   = initSummaryPCMFloat
-    toSummaryData     = mkSummaryPCMFloat
+    toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
 
@@ -220,7 +222,9 @@ instance ZoomPCMWritable Double where
 
     pcmMkSummaryWork = SummaryWorkPCMDouble
 
+{-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Double) -> Double -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
+{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Double -> SummaryWork (PCM Double) -> SummaryWork (PCM Double) #-}
 
 initSummaryPCMFloat :: (Fractional a, ZoomPCMWritable a)
                     => TimeStamp -> SummaryWork (PCM a)
@@ -230,14 +234,6 @@ initSummaryPCMFloat entry = pcmMkSummaryWork
     (-1000.0) -- negate floatMax
     0.0
     0.0
-
-mkSummaryPCMFloat :: (Floating a, ZoomPCMReadable a, ZoomPCMWritable a)
-                  => Double -> SummaryWork (PCM a)
-                  -> SummaryData (PCM a)
-mkSummaryPCMFloat dur sw =
-    pcmMkSummary (pcmWorkMin sw) (pcmWorkMax sw)
-                 (realToFrac (pcmWorkSum sw) / dur)
-                 (sqrt $ pcmWorkSumSq sw / dur)
 
 fromSummaryPCMFloat :: SummaryData (PCM Float) -> Builder
 fromSummaryPCMFloat s = mconcat $

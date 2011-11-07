@@ -6,6 +6,7 @@ module Data.ZoomCache.PCM.Internal (
     -- * Functions
       readSummaryPCM
     , initSummaryPCMBounded
+    , mkSummaryPCM
     , appendSummaryPCM
     , updateSummaryPCM
 ) where
@@ -37,6 +38,15 @@ initSummaryPCMBounded :: (Bounded a, ZoomPCMWritable a)
                       => TimeStamp -> SummaryWork (PCM a)
 initSummaryPCMBounded entry = pcmMkSummaryWork entry maxBound minBound 0.0 0.0
 {-# INLINEABLE initSummaryPCMBounded #-}
+
+mkSummaryPCM :: (ZoomPCMReadable a, ZoomPCMWritable a)
+             => Double -> SummaryWork (PCM a)
+             -> SummaryData (PCM a)
+mkSummaryPCM dur sw =
+    pcmMkSummary (pcmWorkMin sw) (pcmWorkMax sw)
+                 (pcmWorkSum sw / dur)
+                 (sqrt $ (pcmWorkSumSq sw) / dur)
+{-# INLINEABLE mkSummaryPCM #-}
 
 appendSummaryPCM :: (Ord a, ZoomPCMReadable a)
                  => Double -> SummaryData (PCM a)
