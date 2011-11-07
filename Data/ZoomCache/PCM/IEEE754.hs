@@ -83,7 +83,7 @@ import Data.ZoomCache.PCM.Types
 -- import Numeric.FloatMinMax
 
 ----------------------------------------------------------------------
--- Read
+-- Float
 
 instance ZoomReadable (PCM Float) where
     data SummaryData (PCM Float) = SummaryPCMFloat
@@ -103,42 +103,6 @@ instance ZoomReadable (PCM Float) where
 
 {-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Float)) #-}
 {-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Float)) #-}
-
-----------------------------------------------------------------------
-
-instance ZoomReadable (PCM Double) where
-    data SummaryData (PCM Double) = SummaryPCMDouble
-        { summaryPCMDoubleMin   :: {-# UNPACK #-}!Double
-        , summaryPCMDoubleMax   :: {-# UNPACK #-}!Double
-        , summaryPCMDoubleAvg   :: {-# UNPACK #-}!Double
-        , summaryPCMDoubleRMS   :: {-# UNPACK #-}!Double
-        }
-
-    trackIdentifier = const "ZPCMf64b"
-
-    readRaw     = PCM <$> readDouble64be
-    readSummary = readSummaryPCM
-
-    prettyRaw         = prettyPacketPCMFloat
-    prettySummaryData = prettySummaryPCMFloat
-
-{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
-{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Double)) #-}
-
-----------------------------------------------------------------------
-
-prettyPacketPCMFloat :: PrintfArg a => PCM a -> String
-prettyPacketPCMFloat = printf "%.3f" . unPCM
-
-prettySummaryPCMFloat :: (PrintfArg a, ZoomPCM a)
-                      => SummaryData (PCM a) -> String
-prettySummaryPCMFloat s = concat
-    [ printf "\tmin: %.3f\tmax: %.3f\t" (pcmMin s) (pcmMax s)
-    , printf "avg: %.3f\trms: %.3f" (pcmAvg s) (pcmRMS s)
-    ]
-
-----------------------------------------------------------------------
--- Write
 
 instance ZoomWrite (PCM Float) where
     write = writeData
@@ -184,6 +148,28 @@ instance ZoomPCM Float where
 {-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Float) -> Double -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Float -> SummaryWork (PCM Float) -> SummaryWork (PCM Float) #-}
 
+----------------------------------------------------------------------
+-- Double
+
+instance ZoomReadable (PCM Double) where
+    data SummaryData (PCM Double) = SummaryPCMDouble
+        { summaryPCMDoubleMin   :: {-# UNPACK #-}!Double
+        , summaryPCMDoubleMax   :: {-# UNPACK #-}!Double
+        , summaryPCMDoubleAvg   :: {-# UNPACK #-}!Double
+        , summaryPCMDoubleRMS   :: {-# UNPACK #-}!Double
+        }
+
+    trackIdentifier = const "ZPCMf64b"
+
+    readRaw     = PCM <$> readDouble64be
+    readSummary = readSummaryPCM
+
+    prettyRaw         = prettyPacketPCMFloat
+    prettySummaryData = prettySummaryPCMFloat
+
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Double)) #-}
+
 instance ZoomWrite (PCM Double) where
     write = writeData
 
@@ -227,6 +213,19 @@ instance ZoomPCM Double where
 {-# SPECIALIZE mkSummaryPCM :: Double -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Double) -> Double -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Double -> SummaryWork (PCM Double) -> SummaryWork (PCM Double) #-}
+
+----------------------------------------------------------------------
+-- Helpers for float and double
+
+prettyPacketPCMFloat :: PrintfArg a => PCM a -> String
+prettyPacketPCMFloat = printf "%.3f" . unPCM
+
+prettySummaryPCMFloat :: (PrintfArg a, ZoomPCM a)
+                      => SummaryData (PCM a) -> String
+prettySummaryPCMFloat s = concat
+    [ printf "\tmin: %.3f\tmax: %.3f\t" (pcmMin s) (pcmMax s)
+    , printf "avg: %.3f\trms: %.3f" (pcmAvg s) (pcmRMS s)
+    ]
 
 initSummaryPCMFloat :: (Fractional a, ZoomPCM a)
                     => TimeStamp -> SummaryWork (PCM a)
