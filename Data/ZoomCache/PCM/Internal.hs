@@ -6,6 +6,7 @@ module Data.ZoomCache.PCM.Internal (
     -- * Functions
       readSummaryPCM
     , initSummaryPCMBounded
+    , appendSummaryPCM
 ) where
 
 import Control.Applicative ((<$>))
@@ -35,3 +36,18 @@ initSummaryPCMBounded :: (Bounded a, ZoomPCMWritable a)
                       => TimeStamp -> SummaryWork (PCM a)
 initSummaryPCMBounded entry = pcmMkSummaryWork entry maxBound minBound 0.0 0.0
 {-# INLINEABLE initSummaryPCMBounded #-}
+
+appendSummaryPCM :: (Ord a, ZoomPCMReadable a)
+                 => Double -> SummaryData (PCM a)
+                 -> Double -> SummaryData (PCM a)
+                 -> SummaryData (PCM a)
+appendSummaryPCM dur1 s1 dur2 s2 = pcmMkSummary
+    (min (pcmMin s1) (pcmMin s2))
+    (max (pcmMax s1) (pcmMax s2))
+    (((pcmAvg s1 * dur1) + (pcmAvg s2 * dur2)) / durSum)
+    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1) +
+             (pcmRMS s2 * pcmRMS s2 * dur2)) /
+            durSum)
+    where
+        !durSum = dur1 + dur2
+{-# INLINEABLE appendSummaryPCM #-}

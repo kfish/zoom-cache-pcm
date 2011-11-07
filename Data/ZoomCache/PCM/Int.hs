@@ -126,7 +126,7 @@ instance ZoomWritable (PCM Int) where
     initSummaryWork   = initSummaryPCMBounded
     toSummaryData     = mkSummaryPCMInt
     updateSummaryData = updateSummaryPCMInt
-    appendSummaryData = appendSummaryPCMInt
+    appendSummaryData = appendSummaryPCM
 
 instance ZoomPCMWritable Int where
     pcmWorkTime = swPCMIntTime
@@ -137,6 +137,7 @@ instance ZoomPCMWritable Int where
     pcmMkSummaryWork = SummaryWorkPCMInt
 
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int) #-}
+{-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Int) -> Double -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
 
 mkSummaryPCMInt :: (Integral a, ZoomPCMReadable a, ZoomPCMWritable a)
                 => Double -> SummaryWork (PCM a)
@@ -167,17 +168,3 @@ updateSummaryPCMInt t (PCM d) sw =
                        ((pcmWorkSumSq sw) + fromIntegral (d*d * dur))
     where
         !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
-
-appendSummaryPCMInt :: (Ord a, ZoomPCMReadable a)
-                    => Double -> SummaryData (PCM a)
-                    -> Double -> SummaryData (PCM a)
-                    -> SummaryData (PCM a)
-appendSummaryPCMInt dur1 s1 dur2 s2 = pcmMkSummary
-    (min (pcmMin s1) (pcmMin s2))
-    (max (pcmMax s1) (pcmMax s2))
-    (((pcmAvg s1 * dur1) + (pcmAvg s2 * dur2)) / durSum)
-    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1) +
-             (pcmRMS s2 * pcmRMS s2 * dur2)) /
-            durSum)
-    where
-        !durSum = dur1 + dur2

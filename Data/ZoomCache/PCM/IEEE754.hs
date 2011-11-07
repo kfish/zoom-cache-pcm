@@ -176,7 +176,7 @@ instance ZoomWritable (PCM Float) where
     initSummaryWork   = initSummaryPCMFloat
     toSummaryData     = mkSummaryPCMFloat
     updateSummaryData = updateSummaryPCMFloat
-    appendSummaryData = appendSummaryPCMFloat
+    appendSummaryData = appendSummaryPCM
 
 instance ZoomPCMWritable Float where
     pcmWorkTime = swPCMFloatTime
@@ -186,6 +186,8 @@ instance ZoomPCMWritable Float where
     pcmWorkSumSq = swPCMFloatSumSq
 
     pcmMkSummaryWork = SummaryWorkPCMFloat
+
+{-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Float) -> Double -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
 
 instance ZoomWrite (PCM Double) where
     write = writeData
@@ -207,7 +209,7 @@ instance ZoomWritable (PCM Double) where
     initSummaryWork   = initSummaryPCMFloat
     toSummaryData     = mkSummaryPCMFloat
     updateSummaryData = updateSummaryPCMFloat
-    appendSummaryData = appendSummaryPCMFloat
+    appendSummaryData = appendSummaryPCM
 
 instance ZoomPCMWritable Double where
     pcmWorkTime = swPCMDoubleTime
@@ -217,6 +219,8 @@ instance ZoomPCMWritable Double where
     pcmWorkSumSq = swPCMDoubleSumSq
 
     pcmMkSummaryWork = SummaryWorkPCMDouble
+
+{-# SPECIALIZE appendSummaryPCM :: Double -> SummaryData (PCM Double) -> Double -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
 
 initSummaryPCMFloat :: (Fractional a, ZoomPCMWritable a)
                     => TimeStamp -> SummaryWork (PCM a)
@@ -256,18 +260,3 @@ updateSummaryPCMFloat t (PCM d) sw =
                        ((pcmWorkSumSq sw) + realToFrac (d*d * dur))
     where
         !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
-
-appendSummaryPCMFloat :: (Ord a, Floating a, ZoomPCMReadable a)
-                      => Double -> SummaryData (PCM a)
-                      -> Double -> SummaryData (PCM a)
-                      -> SummaryData (PCM a)
-appendSummaryPCMFloat dur1 s1 dur2 s2 = pcmMkSummary
-    (min (pcmMin s1) (pcmMin s2))
-    (max (pcmMax s1) (pcmMax s2))
-    (((pcmAvg s1 * dur1) + (pcmAvg s2 * dur2)) / durSum)
-    (sqrt $ ((pcmRMS s1 * pcmRMS s1 * dur1) +
-             (pcmRMS s2 * pcmRMS s2 * dur2)) /
-            durSum)
-    where
-        !durSum = realToFrac $ dur1 + dur2
-
