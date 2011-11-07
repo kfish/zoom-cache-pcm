@@ -123,7 +123,7 @@ instance ZoomWritable (PCM Int) where
     fromRaw           = fromIntegral32be . unPCM
     fromSummaryData   = fromSummaryPCMInt
 
-    initSummaryWork   = initSummaryPCMInt
+    initSummaryWork   = initSummaryPCMBounded
     toSummaryData     = mkSummaryPCMInt
     updateSummaryData = updateSummaryPCMInt
     appendSummaryData = appendSummaryPCMInt
@@ -136,14 +136,7 @@ instance ZoomPCMWritable Int where
     pcmWorkSumSq = swPCMIntSumSq
     pcmMkSummaryWork = SummaryWorkPCMInt
 
-initSummaryPCMInt :: TimeStamp -> SummaryWork (PCM Int)
-initSummaryPCMInt entry = SummaryWorkPCMInt
-    { swPCMIntTime = entry
-    , swPCMIntMin = maxBound
-    , swPCMIntMax = minBound
-    , swPCMIntSum = 0
-    , swPCMIntSumSq = 0
-    }
+{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int) #-}
 
 mkSummaryPCMInt :: (Integral a, ZoomPCMReadable a, ZoomPCMWritable a)
                 => Double -> SummaryWork (PCM a)

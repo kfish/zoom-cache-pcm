@@ -5,6 +5,7 @@
 module Data.ZoomCache.PCM.Internal (
     -- * Functions
       readSummaryPCM
+    , initSummaryPCMBounded
 ) where
 
 import Control.Applicative ((<$>))
@@ -29,3 +30,8 @@ readSummaryPCM = do
     [avg,rms] <- replicateM 2 readDouble64be
     return (pcmMkSummary mn mx avg rms)
 {-# INLINABLE readSummaryPCM #-}
+
+initSummaryPCMBounded :: (Bounded a, ZoomPCMWritable a)
+                      => TimeStamp -> SummaryWork (PCM a)
+initSummaryPCMBounded entry = pcmMkSummaryWork entry maxBound minBound 0.0 0.0
+{-# INLINEABLE initSummaryPCMBounded #-}
