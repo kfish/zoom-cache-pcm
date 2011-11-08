@@ -186,7 +186,7 @@ instance ZoomReadable (PCM Int8) where
         , summaryInt8RMS   :: {-# UNPACK #-}!Double
         }
 
-    trackIdentifier = const "ZPCMi08b"
+    trackIdentifier = const "ZPCMiS8b"
 
     readRaw     = PCM <$> readInt8
     readSummary = readSummaryPCM
