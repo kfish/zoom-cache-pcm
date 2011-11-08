@@ -24,6 +24,7 @@ pcmIdentifiers =
     [ identifyCodec (undefined :: PCM Float)
     , identifyCodec (undefined :: PCM Double)
     , identifyCodec (undefined :: PCM Int)
+    , identifyCodec (undefined :: PCM Int16)
     , identifyCodec (undefined :: PCM Int32)
     , identifyCodec (undefined :: PCM Int64)
     ]

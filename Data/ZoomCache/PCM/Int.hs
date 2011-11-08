@@ -18,6 +18,23 @@
 Default codec implementation for PCM Audio of type Int. This module
 implements the interfaces documented in "Data.ZoomCache.Codec".
 
+The table below describes the encoding of SummaryData for 'PCM Int16':
+
+@
+   | ...                                                           |   -35
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Min (int16)                     | Max (int16)                 | 36-39
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Mean [DC Bias] (double)                                       | 40-43
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               | 44-47
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | RMS (double)                                                  | 48-51
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               | 52-55
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+@
+
 The table below describes the encoding of SummaryData for 'PCM Int' and
 'PCM Int32':
 
@@ -157,6 +174,74 @@ instance ZoomPCM Int where
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int) -> TimeStampDiff -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int -> SummaryWork (PCM Int) -> SummaryWork (PCM Int) #-}
+
+----------------------------------------------------------------------
+-- Int16
+
+instance ZoomReadable (PCM Int16) where
+    data SummaryData (PCM Int16) = SummaryPCMInt16
+        { summaryInt16Min   :: {-# UNPACK #-}!Int16
+        , summaryInt16Max   :: {-# UNPACK #-}!Int16
+        , summaryInt16Avg   :: {-# UNPACK #-}!Double
+        , summaryInt16RMS   :: {-# UNPACK #-}!Double
+        }
+
+    trackIdentifier = const "ZPCMi16b"
+
+    readRaw     = PCM <$> readInt16be
+    readSummary = readSummaryPCM
+
+    prettyRaw         = prettyPacketPCMInt
+    prettySummaryData = prettySummaryPCMInt
+
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Int16)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Int16)) #-}
+
+instance ZoomWrite (PCM Int16) where
+    write = writeData
+
+instance ZoomWrite (TimeStamp, (PCM Int16)) where
+    write = writeDataVBR
+
+instance ZoomWritable (PCM Int16) where
+    data SummaryWork (PCM Int16) = SummaryWorkPCMInt16
+        { swPCMInt16Time  :: {-# UNPACK #-}!TimeStamp
+        , swPCMInt16Min   :: {-# UNPACK #-}!Int16
+        , swPCMInt16Max   :: {-# UNPACK #-}!Int16
+        , swPCMInt16Sum   :: {-# UNPACK #-}!Double
+        , swPCMInt16SumSq :: {-# UNPACK #-}!Double
+        }
+
+    fromRaw           = pcmFromRaw . unPCM
+    fromSummaryData   = fromSummaryPCM
+
+    initSummaryWork   = initSummaryPCMBounded
+    toSummaryData     = mkSummaryPCM
+    updateSummaryData = updateSummaryPCM
+    appendSummaryData = appendSummaryPCM
+
+instance ZoomPCM Int16 where
+    pcmFromRaw = fromInt16be
+
+    pcmMin = summaryInt16Min
+    pcmMax = summaryInt16Max
+    pcmAvg = summaryInt16Avg
+    pcmRMS = summaryInt16RMS
+
+    pcmWorkTime = swPCMInt16Time
+    pcmWorkMin = swPCMInt16Min
+    pcmWorkMax = swPCMInt16Max
+    pcmWorkSum = swPCMInt16Sum
+    pcmWorkSumSq = swPCMInt16SumSq
+
+    pcmMkSummary = SummaryPCMInt16
+    pcmMkSummaryWork = SummaryWorkPCMInt16
+
+{-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int16) -> Builder #-}
+{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int16) #-}
+{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int16) -> SummaryData (PCM Int16) #-}
+{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int16) -> TimeStampDiff -> SummaryData (PCM Int16) -> SummaryData (PCM Int16) #-}
+{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int16 -> SummaryWork (PCM Int16) -> SummaryWork (PCM Int16) #-}
 
 ----------------------------------------------------------------------
 -- Int32
