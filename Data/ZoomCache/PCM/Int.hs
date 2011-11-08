@@ -59,7 +59,7 @@ import Data.ZoomCache.PCM.Internal
 import Data.ZoomCache.PCM.Types
 
 ----------------------------------------------------------------------
--- Read
+-- Int
 
 instance ZoomReadable (PCM Int) where
     data SummaryData (PCM Int) = SummaryPCMInt
@@ -79,21 +79,6 @@ instance ZoomReadable (PCM Int) where
 
 {-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Int)) #-}
 {-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Int)) #-}
-
-----------------------------------------------------------------------
-
-prettyPacketPCMInt :: Show a => PCM a -> String
-prettyPacketPCMInt = show . unPCM
-
-prettySummaryPCMInt :: (PrintfArg a, ZoomPCM a)
-                    => SummaryData (PCM a) -> String
-prettySummaryPCMInt s = concat
-    [ printf "\tmin: %d\tmax: %d\t" (pcmMin s) (pcmMax s)
-    , printf "avg: %.3f\trms: %.3f" (pcmAvg s) (pcmRMS s)
-    ]
-
-----------------------------------------------------------------------
--- Write
 
 instance ZoomWrite (PCM Int) where
     write = writeData
@@ -140,3 +125,16 @@ instance ZoomPCM Int where
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int) -> TimeStampDiff -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int -> SummaryWork (PCM Int) -> SummaryWork (PCM Int) #-}
+
+----------------------------------------------------------------------
+
+prettyPacketPCMInt :: Show a => PCM a -> String
+prettyPacketPCMInt = show . unPCM
+
+prettySummaryPCMInt :: (PrintfArg a, ZoomPCM a)
+                    => SummaryData (PCM a) -> String
+prettySummaryPCMInt s = concat
+    [ printf "\tmin: %d\tmax: %d\t" (pcmMin s) (pcmMax s)
+    , printf "avg: %.3f\trms: %.3f" (pcmAvg s) (pcmRMS s)
+    ]
+
