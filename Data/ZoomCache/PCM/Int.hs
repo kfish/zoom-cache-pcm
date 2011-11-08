@@ -176,6 +176,74 @@ instance ZoomPCM Int where
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int -> SummaryWork (PCM Int) -> SummaryWork (PCM Int) #-}
 
 ----------------------------------------------------------------------
+-- Int8
+
+instance ZoomReadable (PCM Int8) where
+    data SummaryData (PCM Int8) = SummaryPCMInt8
+        { summaryInt8Min   :: {-# UNPACK #-}!Int8
+        , summaryInt8Max   :: {-# UNPACK #-}!Int8
+        , summaryInt8Avg   :: {-# UNPACK #-}!Double
+        , summaryInt8RMS   :: {-# UNPACK #-}!Double
+        }
+
+    trackIdentifier = const "ZPCMi08b"
+
+    readRaw     = PCM <$> readInt8
+    readSummary = readSummaryPCM
+
+    prettyRaw         = prettyPacketPCMInt
+    prettySummaryData = prettySummaryPCMInt
+
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Int8)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Int8)) #-}
+
+instance ZoomWrite (PCM Int8) where
+    write = writeData
+
+instance ZoomWrite (TimeStamp, (PCM Int8)) where
+    write = writeDataVBR
+
+instance ZoomWritable (PCM Int8) where
+    data SummaryWork (PCM Int8) = SummaryWorkPCMInt8
+        { swPCMInt8Time  :: {-# UNPACK #-}!TimeStamp
+        , swPCMInt8Min   :: {-# UNPACK #-}!Int8
+        , swPCMInt8Max   :: {-# UNPACK #-}!Int8
+        , swPCMInt8Sum   :: {-# UNPACK #-}!Double
+        , swPCMInt8SumSq :: {-# UNPACK #-}!Double
+        }
+
+    fromRaw           = pcmFromRaw . unPCM
+    fromSummaryData   = fromSummaryPCM
+
+    initSummaryWork   = initSummaryPCMBounded
+    toSummaryData     = mkSummaryPCM
+    updateSummaryData = updateSummaryPCM
+    appendSummaryData = appendSummaryPCM
+
+instance ZoomPCM Int8 where
+    pcmFromRaw = fromInt8
+
+    pcmMin = summaryInt8Min
+    pcmMax = summaryInt8Max
+    pcmAvg = summaryInt8Avg
+    pcmRMS = summaryInt8RMS
+
+    pcmWorkTime = swPCMInt8Time
+    pcmWorkMin = swPCMInt8Min
+    pcmWorkMax = swPCMInt8Max
+    pcmWorkSum = swPCMInt8Sum
+    pcmWorkSumSq = swPCMInt8SumSq
+
+    pcmMkSummary = SummaryPCMInt8
+    pcmMkSummaryWork = SummaryWorkPCMInt8
+
+{-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int8) -> Builder #-}
+{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int8) #-}
+{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int8) -> SummaryData (PCM Int8) #-}
+{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int8) -> TimeStampDiff -> SummaryData (PCM Int8) -> SummaryData (PCM Int8) #-}
+{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int8 -> SummaryWork (PCM Int8) -> SummaryWork (PCM Int8) #-}
+
+----------------------------------------------------------------------
 -- Int16
 
 instance ZoomReadable (PCM Int16) where
