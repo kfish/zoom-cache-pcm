@@ -34,9 +34,35 @@ The table below describes the encoding of SummaryData for 'PCM Int' and
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 @
 
+The table below describes the encoding of SummaryData for 'PCM Int64':
+
+@
+   | ...                                                           |   -35
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Min (int64)                                                   | 36-39
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               | 40-43
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Max (int64)                                                   | 44-47
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               | 48-51
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Mean [DC Bias] (int64)                                        | 52-55
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               | 56-59
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | RMS (int64)                                                   | 60-63
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               | 64-67
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+@
+
 Field encoding formats:
 
   @int32@:  32bit big endian
+
+  @int64@:  64bit big endian
+
   @double@: big-endian IEEE 754-2008 binary64 (IEEE 754-1985 double)
 
 -}
@@ -195,6 +221,74 @@ instance ZoomPCM Int32 where
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int32) -> SummaryData (PCM Int32) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int32) -> TimeStampDiff -> SummaryData (PCM Int32) -> SummaryData (PCM Int32) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int32 -> SummaryWork (PCM Int32) -> SummaryWork (PCM Int32) #-}
+
+----------------------------------------------------------------------
+-- Int64
+
+instance ZoomReadable (PCM Int64) where
+    data SummaryData (PCM Int64) = SummaryPCMInt64
+        { summaryInt64Min   :: {-# UNPACK #-}!Int64
+        , summaryInt64Max   :: {-# UNPACK #-}!Int64
+        , summaryInt64Avg   :: {-# UNPACK #-}!Double
+        , summaryInt64RMS   :: {-# UNPACK #-}!Double
+        }
+
+    trackIdentifier = const "ZPCMi64b"
+
+    readRaw     = PCM <$> readInt64be
+    readSummary = readSummaryPCM
+
+    prettyRaw         = prettyPacketPCMInt
+    prettySummaryData = prettySummaryPCMInt
+
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Int64)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Int64)) #-}
+
+instance ZoomWrite (PCM Int64) where
+    write = writeData
+
+instance ZoomWrite (TimeStamp, (PCM Int64)) where
+    write = writeDataVBR
+
+instance ZoomWritable (PCM Int64) where
+    data SummaryWork (PCM Int64) = SummaryWorkPCMInt64
+        { swPCMInt64Time  :: {-# UNPACK #-}!TimeStamp
+        , swPCMInt64Min   :: {-# UNPACK #-}!Int64
+        , swPCMInt64Max   :: {-# UNPACK #-}!Int64
+        , swPCMInt64Sum   :: {-# UNPACK #-}!Double
+        , swPCMInt64SumSq :: {-# UNPACK #-}!Double
+        }
+
+    fromRaw           = pcmFromRaw . unPCM
+    fromSummaryData   = fromSummaryPCM
+
+    initSummaryWork   = initSummaryPCMBounded
+    toSummaryData     = mkSummaryPCM
+    updateSummaryData = updateSummaryPCM
+    appendSummaryData = appendSummaryPCM
+
+instance ZoomPCM Int64 where
+    pcmFromRaw = fromInt64be
+
+    pcmMin = summaryInt64Min
+    pcmMax = summaryInt64Max
+    pcmAvg = summaryInt64Avg
+    pcmRMS = summaryInt64RMS
+
+    pcmWorkTime = swPCMInt64Time
+    pcmWorkMin = swPCMInt64Min
+    pcmWorkMax = swPCMInt64Max
+    pcmWorkSum = swPCMInt64Sum
+    pcmWorkSumSq = swPCMInt64SumSq
+
+    pcmMkSummary = SummaryPCMInt64
+    pcmMkSummaryWork = SummaryWorkPCMInt64
+
+{-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int64) -> Builder #-}
+{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int64) #-}
+{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int64) -> SummaryData (PCM Int64) #-}
+{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int64) -> TimeStampDiff -> SummaryData (PCM Int64) -> SummaryData (PCM Int64) #-}
+{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int64 -> SummaryWork (PCM Int64) -> SummaryWork (PCM Int64) #-}
 
 ----------------------------------------------------------------------
 
