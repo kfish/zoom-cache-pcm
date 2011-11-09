@@ -71,7 +71,6 @@ module Data.ZoomCache.PCM.IEEE754 (
 
 import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
-import Control.Monad.Trans (MonadIO)
 import Data.ByteString (ByteString)
 import Data.Iteratee (Iteratee)
 import Data.Word
@@ -100,8 +99,8 @@ instance ZoomReadable (PCM Float) where
     prettyRaw         = prettyPacketPCMFloat
     prettySummaryData = prettySummaryPCMFloat
 
-{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Float)) #-}
-{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Float)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee [Word8] m (SummaryData (PCM Float)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Float)) #-}
 
 instance ZoomWrite (PCM Float) where
     write = writeData
@@ -166,8 +165,8 @@ instance ZoomReadable (PCM Double) where
     prettyRaw         = prettyPacketPCMFloat
     prettySummaryData = prettySummaryPCMFloat
 
-{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
-{-# SPECIALIZE readSummaryPCM :: (Functor m, MonadIO m) => Iteratee ByteString m (SummaryData (PCM Double)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
+{-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Double)) #-}
 
 instance ZoomWrite (PCM Double) where
     write = writeData

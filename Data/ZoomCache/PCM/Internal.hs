@@ -15,7 +15,6 @@ module Data.ZoomCache.PCM.Internal (
 import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
 import Control.Monad (replicateM)
-import Control.Monad.Trans (MonadIO)
 import Data.Iteratee (Iteratee)
 import qualified Data.Iteratee as I
 import qualified Data.ListLike as LL
@@ -28,7 +27,7 @@ import Data.ZoomCache.PCM.Types
 ----------------------------------------------------------------------
 
 readSummaryPCM :: (I.Nullable s, LL.ListLike s Word8,
-                   Functor m, MonadIO m,
+                   Functor m, Monad m,
                    ZoomPCM a)
                => Iteratee s m (SummaryData (PCM a))
 readSummaryPCM = do
