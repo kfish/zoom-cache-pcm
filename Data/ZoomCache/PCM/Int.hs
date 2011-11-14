@@ -124,6 +124,8 @@ instance ZoomReadable (PCM Int) where
     prettyRaw         = prettyPacketPCMInt
     prettySummaryData = prettySummaryPCMInt
 
+    deltaDecodeRaw = deltaDecodePCM
+
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int)) #-}
 
 instance ZoomWrite (PCM Int) where
@@ -135,6 +137,7 @@ instance ZoomWrite (TimeStamp, (PCM Int)) where
 instance ZoomWritable (PCM Int) where
     data SummaryWork (PCM Int) = SummaryWorkPCMInt
         { swPCMIntTime  :: {-# UNPACK #-}!TimeStamp
+        , swPCMIntLast  :: {-# UNPACK #-}!Int
         , swPCMIntMin   :: {-# UNPACK #-}!Int
         , swPCMIntMax   :: {-# UNPACK #-}!Int
         , swPCMIntSum   :: {-# UNPACK #-}!Double
@@ -148,6 +151,7 @@ instance ZoomWritable (PCM Int) where
     toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
+    deltaEncodeRaw    = deltaEncodePCM
 
 instance ZoomPCM Int where
     pcmFromRaw = fromIntegral32be
@@ -158,6 +162,7 @@ instance ZoomPCM Int where
     pcmRMS = summaryIntRMS
 
     pcmWorkTime = swPCMIntTime
+    pcmWorkLast = swPCMIntLast
     pcmWorkMin = swPCMIntMin
     pcmWorkMax = swPCMIntMax
     pcmWorkSum = swPCMIntSum
@@ -191,6 +196,8 @@ instance ZoomReadable (PCM Int8) where
     prettyRaw         = prettyPacketPCMInt
     prettySummaryData = prettySummaryPCMInt
 
+    deltaDecodeRaw = deltaDecodePCM
+
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int8)) #-}
 
 instance ZoomWrite (PCM Int8) where
@@ -202,6 +209,7 @@ instance ZoomWrite (TimeStamp, (PCM Int8)) where
 instance ZoomWritable (PCM Int8) where
     data SummaryWork (PCM Int8) = SummaryWorkPCMInt8
         { swPCMInt8Time  :: {-# UNPACK #-}!TimeStamp
+        , swPCMInt8Last  :: {-# UNPACK #-}!Int8
         , swPCMInt8Min   :: {-# UNPACK #-}!Int8
         , swPCMInt8Max   :: {-# UNPACK #-}!Int8
         , swPCMInt8Sum   :: {-# UNPACK #-}!Double
@@ -215,6 +223,7 @@ instance ZoomWritable (PCM Int8) where
     toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
+    deltaEncodeRaw    = deltaEncodePCM
 
 instance ZoomPCM Int8 where
     pcmFromRaw = fromInt8
@@ -225,6 +234,7 @@ instance ZoomPCM Int8 where
     pcmRMS = summaryInt8RMS
 
     pcmWorkTime = swPCMInt8Time
+    pcmWorkLast = swPCMInt8Last
     pcmWorkMin = swPCMInt8Min
     pcmWorkMax = swPCMInt8Max
     pcmWorkSum = swPCMInt8Sum
@@ -258,6 +268,8 @@ instance ZoomReadable (PCM Int16) where
     prettyRaw         = prettyPacketPCMInt
     prettySummaryData = prettySummaryPCMInt
 
+    deltaDecodeRaw = deltaDecodePCM
+
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int16)) #-}
 
 instance ZoomWrite (PCM Int16) where
@@ -269,6 +281,7 @@ instance ZoomWrite (TimeStamp, (PCM Int16)) where
 instance ZoomWritable (PCM Int16) where
     data SummaryWork (PCM Int16) = SummaryWorkPCMInt16
         { swPCMInt16Time  :: {-# UNPACK #-}!TimeStamp
+        , swPCMInt16Last  :: {-# UNPACK #-}!Int16
         , swPCMInt16Min   :: {-# UNPACK #-}!Int16
         , swPCMInt16Max   :: {-# UNPACK #-}!Int16
         , swPCMInt16Sum   :: {-# UNPACK #-}!Double
@@ -282,6 +295,7 @@ instance ZoomWritable (PCM Int16) where
     toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
+    deltaEncodeRaw    = deltaEncodePCM
 
 instance ZoomPCM Int16 where
     pcmFromRaw = fromInt16be
@@ -292,6 +306,7 @@ instance ZoomPCM Int16 where
     pcmRMS = summaryInt16RMS
 
     pcmWorkTime = swPCMInt16Time
+    pcmWorkLast = swPCMInt16Last
     pcmWorkMin = swPCMInt16Min
     pcmWorkMax = swPCMInt16Max
     pcmWorkSum = swPCMInt16Sum
@@ -325,6 +340,8 @@ instance ZoomReadable (PCM Int32) where
     prettyRaw         = prettyPacketPCMInt
     prettySummaryData = prettySummaryPCMInt
 
+    deltaDecodeRaw = deltaDecodePCM
+
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int32)) #-}
 
 instance ZoomWrite (PCM Int32) where
@@ -336,6 +353,7 @@ instance ZoomWrite (TimeStamp, (PCM Int32)) where
 instance ZoomWritable (PCM Int32) where
     data SummaryWork (PCM Int32) = SummaryWorkPCMInt32
         { swPCMInt32Time  :: {-# UNPACK #-}!TimeStamp
+        , swPCMInt32Last  :: {-# UNPACK #-}!Int32
         , swPCMInt32Min   :: {-# UNPACK #-}!Int32
         , swPCMInt32Max   :: {-# UNPACK #-}!Int32
         , swPCMInt32Sum   :: {-# UNPACK #-}!Double
@@ -349,6 +367,7 @@ instance ZoomWritable (PCM Int32) where
     toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
+    deltaEncodeRaw    = deltaEncodePCM
 
 instance ZoomPCM Int32 where
     pcmFromRaw = fromIntegral32be
@@ -359,6 +378,7 @@ instance ZoomPCM Int32 where
     pcmRMS = summaryInt32RMS
 
     pcmWorkTime = swPCMInt32Time
+    pcmWorkLast = swPCMInt32Last
     pcmWorkMin = swPCMInt32Min
     pcmWorkMax = swPCMInt32Max
     pcmWorkSum = swPCMInt32Sum
@@ -392,6 +412,8 @@ instance ZoomReadable (PCM Int64) where
     prettyRaw         = prettyPacketPCMInt
     prettySummaryData = prettySummaryPCMInt
 
+    deltaDecodeRaw = deltaDecodePCM
+
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int64)) #-}
 
 instance ZoomWrite (PCM Int64) where
@@ -403,6 +425,7 @@ instance ZoomWrite (TimeStamp, (PCM Int64)) where
 instance ZoomWritable (PCM Int64) where
     data SummaryWork (PCM Int64) = SummaryWorkPCMInt64
         { swPCMInt64Time  :: {-# UNPACK #-}!TimeStamp
+        , swPCMInt64Last  :: {-# UNPACK #-}!Int64
         , swPCMInt64Min   :: {-# UNPACK #-}!Int64
         , swPCMInt64Max   :: {-# UNPACK #-}!Int64
         , swPCMInt64Sum   :: {-# UNPACK #-}!Double
@@ -416,6 +439,7 @@ instance ZoomWritable (PCM Int64) where
     toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
+    deltaEncodeRaw    = deltaEncodePCM
 
 instance ZoomPCM Int64 where
     pcmFromRaw = fromInt64be
@@ -426,6 +450,7 @@ instance ZoomPCM Int64 where
     pcmRMS = summaryInt64RMS
 
     pcmWorkTime = swPCMInt64Time
+    pcmWorkLast = swPCMInt64Last
     pcmWorkMin = swPCMInt64Min
     pcmWorkMax = swPCMInt64Max
     pcmWorkSum = swPCMInt64Sum

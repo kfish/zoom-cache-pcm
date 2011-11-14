@@ -98,6 +98,8 @@ instance ZoomReadable (PCM Float) where
     prettyRaw         = prettyPacketPCMFloat
     prettySummaryData = prettySummaryPCMFloat
 
+    deltaDecodeRaw    = deltaDecodePCM
+
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Float)) #-}
 
 instance ZoomWrite (PCM Float) where
@@ -109,6 +111,7 @@ instance ZoomWrite (TimeStamp, PCM Float) where
 instance ZoomWritable (PCM Float) where
     data SummaryWork (PCM Float) = SummaryWorkPCMFloat
         { swPCMFloatTime  :: {-# UNPACK #-}!TimeStamp
+        , swPCMFloatLast  :: {-# UNPACK #-}!Float
         , swPCMFloatMin   :: {-# UNPACK #-}!Float
         , swPCMFloatMax   :: {-# UNPACK #-}!Float
         , swPCMFloatSum   :: {-# UNPACK #-}!Double
@@ -121,6 +124,7 @@ instance ZoomWritable (PCM Float) where
     toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
+    deltaEncodeRaw    = deltaEncodePCM
 
 instance ZoomPCM Float where
     pcmFromRaw = fromFloat
@@ -131,6 +135,7 @@ instance ZoomPCM Float where
     pcmRMS = summaryPCMFloatRMS
 
     pcmWorkTime = swPCMFloatTime
+    pcmWorkLast = swPCMFloatLast
     pcmWorkMin = swPCMFloatMin
     pcmWorkMax = swPCMFloatMax
     pcmWorkSum = swPCMFloatSum
@@ -163,6 +168,8 @@ instance ZoomReadable (PCM Double) where
     prettyRaw         = prettyPacketPCMFloat
     prettySummaryData = prettySummaryPCMFloat
 
+    deltaDecodeRaw    = deltaDecodePCM
+
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Double)) #-}
 
 instance ZoomWrite (PCM Double) where
@@ -174,6 +181,7 @@ instance ZoomWrite (TimeStamp, PCM Double) where
 instance ZoomWritable (PCM Double) where
     data SummaryWork (PCM Double) = SummaryWorkPCMDouble
         { swPCMDoubleTime  :: {-# UNPACK #-}!TimeStamp
+        , swPCMDoubleLast  :: {-# UNPACK #-}!Double
         , swPCMDoubleMin   :: {-# UNPACK #-}!Double
         , swPCMDoubleMax   :: {-# UNPACK #-}!Double
         , swPCMDoubleSum   :: {-# UNPACK #-}!Double
@@ -186,6 +194,7 @@ instance ZoomWritable (PCM Double) where
     toSummaryData     = mkSummaryPCM
     updateSummaryData = updateSummaryPCM
     appendSummaryData = appendSummaryPCM
+    deltaEncodeRaw    = deltaEncodePCM
 
 instance ZoomPCM Double where
     pcmFromRaw = fromDouble
@@ -196,6 +205,7 @@ instance ZoomPCM Double where
     pcmRMS = summaryPCMDoubleRMS
 
     pcmWorkTime = swPCMDoubleTime
+    pcmWorkLast = swPCMDoubleLast
     pcmWorkMin = swPCMDoubleMin
     pcmWorkMax = swPCMDoubleMax
     pcmWorkSum = swPCMDoubleSum
@@ -226,6 +236,7 @@ initSummaryPCMFloat :: (RealFloat a, ZoomPCM a)
                     => TimeStamp -> SummaryWork (PCM a)
 initSummaryPCMFloat entry = pcmMkSummaryWork
     entry
+    0.0
     floatMax
     (negate floatMax)
     0.0

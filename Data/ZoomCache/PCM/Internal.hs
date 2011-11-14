@@ -10,6 +10,8 @@ module Data.ZoomCache.PCM.Internal (
     , mkSummaryPCM
     , appendSummaryPCM
     , updateSummaryPCM
+    , deltaDecodePCM
+    , deltaEncodePCM
 ) where
 
 import Blaze.ByteString.Builder
@@ -41,7 +43,7 @@ fromSummaryPCM s = mconcat $
 
 initSummaryPCMBounded :: (Bounded a, ZoomPCM a)
                       => TimeStamp -> SummaryWork (PCM a)
-initSummaryPCMBounded entry = pcmMkSummaryWork entry maxBound minBound 0.0 0.0
+initSummaryPCMBounded entry = pcmMkSummaryWork entry 0 maxBound minBound 0.0 0.0
 {-# INLINEABLE initSummaryPCMBounded #-}
 
 mkSummaryPCM :: ZoomPCM a
@@ -73,10 +75,19 @@ updateSummaryPCM :: ZoomPCM a
                  -> SummaryWork (PCM a)
                  -> SummaryWork (PCM a)
 updateSummaryPCM t (PCM d) sw =
-    pcmMkSummaryWork t (min (pcmWorkMin sw) d)
-                       (max (pcmWorkMax sw) d)
-                       ((pcmWorkSum sw) + realToFrac (d * dur))
-                       ((pcmWorkSumSq sw) + realToFrac (d*d * dur))
+    pcmMkSummaryWork t d
+                     (min (pcmWorkMin sw) d)
+                     (max (pcmWorkMax sw) d)
+                     ((pcmWorkSum sw) + realToFrac (d * dur))
+                     ((pcmWorkSumSq sw) + realToFrac (d*d * dur))
     where
         !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
 {-# INLINEABLE updateSummaryPCM #-}
+
+deltaDecodePCM :: ZoomPCM a => [PCM a] -> [PCM a]
+deltaDecodePCM = map PCM . deltaDecode . map unPCM
+{-# INLINE deltaDecodePCM #-}
+
+deltaEncodePCM :: ZoomPCM a => SummaryWork (PCM a) -> PCM a -> PCM a
+deltaEncodePCM sw (PCM d) = PCM (d - pcmWorkLast sw)
+{-# INLINE deltaEncodePCM #-}
