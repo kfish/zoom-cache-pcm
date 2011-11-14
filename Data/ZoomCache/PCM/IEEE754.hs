@@ -73,7 +73,6 @@ import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
 import Data.ByteString (ByteString)
 import Data.Iteratee (Iteratee)
-import Data.Word
 import Text.Printf
 
 import Data.ZoomCache.Codec
@@ -99,7 +98,6 @@ instance ZoomReadable (PCM Float) where
     prettyRaw         = prettyPacketPCMFloat
     prettySummaryData = prettySummaryPCMFloat
 
-{-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee [Word8] m (SummaryData (PCM Float)) #-}
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Float)) #-}
 
 instance ZoomWrite (PCM Float) where
@@ -165,7 +163,6 @@ instance ZoomReadable (PCM Double) where
     prettyRaw         = prettyPacketPCMFloat
     prettySummaryData = prettySummaryPCMFloat
 
-{-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee [Word8] m (SummaryData (PCM Double)) #-}
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Double)) #-}
 
 instance ZoomWrite (PCM Double) where

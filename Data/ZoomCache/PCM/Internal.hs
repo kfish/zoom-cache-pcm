@@ -15,21 +15,17 @@ module Data.ZoomCache.PCM.Internal (
 import Blaze.ByteString.Builder
 import Control.Applicative ((<$>))
 import Control.Monad (replicateM)
+import Data.ByteString (ByteString)
 import Data.Iteratee (Iteratee)
-import qualified Data.Iteratee as I
-import qualified Data.ListLike as LL
 import Data.Monoid
-import Data.Word
 
 import Data.ZoomCache.Codec
 import Data.ZoomCache.PCM.Types
 
 ----------------------------------------------------------------------
 
-readSummaryPCM :: (I.Nullable s, LL.ListLike s Word8,
-                   Functor m, Monad m,
-                   ZoomPCM a)
-               => Iteratee s m (SummaryData (PCM a))
+readSummaryPCM :: (Functor m, Monad m, ZoomPCM a)
+               => Iteratee ByteString m (SummaryData (PCM a))
 readSummaryPCM = do
     [mn,mx] <- replicateM 2 (unPCM <$> readRaw)
     [avg,rms] <- replicateM 2 readDouble64be
