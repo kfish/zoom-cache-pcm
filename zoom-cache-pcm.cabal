@@ -3,7 +3,7 @@ Name:                zoom-cache-pcm
 -- The package version. See the Haskell package versioning policy
 -- (http://www.haskell.org/haskellwiki/Package_versioning_policy) for
 -- standards guiding when and how versions should be incremented.
-Version:             0.2.0.0
+Version:             0.2.0.1
 
 Synopsis:            Library for zoom-cache PCM audio codecs
 
@@ -48,7 +48,7 @@ Library
     containers                >= 0.2     && < 0.5,
     iteratee                  >= 0.8.6.0 && < 0.9,
     ListLike                  >= 1.0     && < 4,
-    zoom-cache                >= 0.7.0.0 && < 0.8
+    zoom-cache                >= 0.7.0.0 && < 0.9
 
   Exposed-modules:
     Data.ZoomCache.PCM
