@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -126,7 +127,9 @@ instance ZoomReadable (PCM Int) where
 
     deltaDecodeRaw = deltaDecodePCM
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int)) #-}
+#endif
 
 instance ZoomWrite (PCM Int) where
     write = writeData
@@ -171,11 +174,13 @@ instance ZoomPCM Int where
     pcmMkSummary = SummaryPCMInt
     pcmMkSummaryWork = SummaryWorkPCMInt
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int) -> Builder #-}
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int) #-}
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int) -> TimeStampDiff -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int -> SummaryWork (PCM Int) -> SummaryWork (PCM Int) #-}
+#endif
 
 ----------------------------------------------------------------------
 -- Int8
@@ -198,7 +203,9 @@ instance ZoomReadable (PCM Int8) where
 
     deltaDecodeRaw = deltaDecodePCM
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int8)) #-}
+#endif
 
 instance ZoomWrite (PCM Int8) where
     write = writeData
@@ -243,11 +250,13 @@ instance ZoomPCM Int8 where
     pcmMkSummary = SummaryPCMInt8
     pcmMkSummaryWork = SummaryWorkPCMInt8
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int8) -> Builder #-}
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int8) #-}
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int8) -> SummaryData (PCM Int8) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int8) -> TimeStampDiff -> SummaryData (PCM Int8) -> SummaryData (PCM Int8) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int8 -> SummaryWork (PCM Int8) -> SummaryWork (PCM Int8) #-}
+#endif
 
 ----------------------------------------------------------------------
 -- Int16
@@ -270,7 +279,9 @@ instance ZoomReadable (PCM Int16) where
 
     deltaDecodeRaw = deltaDecodePCM
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int16)) #-}
+#endif
 
 instance ZoomWrite (PCM Int16) where
     write = writeData
@@ -315,11 +326,13 @@ instance ZoomPCM Int16 where
     pcmMkSummary = SummaryPCMInt16
     pcmMkSummaryWork = SummaryWorkPCMInt16
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int16) -> Builder #-}
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int16) #-}
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int16) -> SummaryData (PCM Int16) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int16) -> TimeStampDiff -> SummaryData (PCM Int16) -> SummaryData (PCM Int16) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int16 -> SummaryWork (PCM Int16) -> SummaryWork (PCM Int16) #-}
+#endif
 
 ----------------------------------------------------------------------
 -- Int32
@@ -342,7 +355,9 @@ instance ZoomReadable (PCM Int32) where
 
     deltaDecodeRaw = deltaDecodePCM
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int32)) #-}
+#endif
 
 instance ZoomWrite (PCM Int32) where
     write = writeData
@@ -387,11 +402,13 @@ instance ZoomPCM Int32 where
     pcmMkSummary = SummaryPCMInt32
     pcmMkSummaryWork = SummaryWorkPCMInt32
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int32) -> Builder #-}
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int32) #-}
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int32) -> SummaryData (PCM Int32) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int32) -> TimeStampDiff -> SummaryData (PCM Int32) -> SummaryData (PCM Int32) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int32 -> SummaryWork (PCM Int32) -> SummaryWork (PCM Int32) #-}
+#endif
 
 ----------------------------------------------------------------------
 -- Int64
@@ -414,7 +431,9 @@ instance ZoomReadable (PCM Int64) where
 
     deltaDecodeRaw = deltaDecodePCM
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Int64)) #-}
+#endif
 
 instance ZoomWrite (PCM Int64) where
     write = writeData
@@ -459,11 +478,13 @@ instance ZoomPCM Int64 where
     pcmMkSummary = SummaryPCMInt64
     pcmMkSummaryWork = SummaryWorkPCMInt64
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int64) -> Builder #-}
 {-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int64) #-}
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int64) -> SummaryData (PCM Int64) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int64) -> TimeStampDiff -> SummaryData (PCM Int64) -> SummaryData (PCM Int64) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int64 -> SummaryWork (PCM Int64) -> SummaryWork (PCM Int64) #-}
+#endif
 
 ----------------------------------------------------------------------
 

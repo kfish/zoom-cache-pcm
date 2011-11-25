@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -100,7 +101,9 @@ instance ZoomReadable (PCM Float) where
 
     deltaDecodeRaw    = deltaDecodePCM
 
+#ifdef __GHC_VERSION__ >= 700
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Float)) #-}
+#endif
 
 instance ZoomWrite (PCM Float) where
     write = writeData
@@ -144,10 +147,12 @@ instance ZoomPCM Float where
     pcmMkSummary = SummaryPCMFloat
     pcmMkSummaryWork = SummaryWorkPCMFloat
 
+#ifdef __GHC_VERSION__ >= 700
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Float) -> Builder #-}
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Float) -> SummaryData (PCM Float) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Float) -> TimeStampDiff -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Float -> SummaryWork (PCM Float) -> SummaryWork (PCM Float) #-}
+#endif
 
 ----------------------------------------------------------------------
 -- Double
@@ -170,7 +175,9 @@ instance ZoomReadable (PCM Double) where
 
     deltaDecodeRaw    = deltaDecodePCM
 
+#ifdef __GHC_VERSION__ >= 700
 {-# SPECIALIZE readSummaryPCM :: (Functor m, Monad m) => Iteratee ByteString m (SummaryData (PCM Double)) #-}
+#endif
 
 instance ZoomWrite (PCM Double) where
     write = writeData
@@ -214,10 +221,12 @@ instance ZoomPCM Double where
     pcmMkSummary = SummaryPCMDouble
     pcmMkSummaryWork = SummaryWorkPCMDouble
 
+#if __GHC_VERSION__ >= 700
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Double) -> Builder #-}
 {-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Double) -> TimeStampDiff -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
 {-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Double -> SummaryWork (PCM Double) -> SummaryWork (PCM Double) #-}
+#endif
 
 ----------------------------------------------------------------------
 -- Helpers for float and double
