@@ -134,12 +134,12 @@ instance ZoomReadable (PCM Int) where
 instance ZoomWrite (PCM Int) where
     write = writeData
 
-instance ZoomWrite (TimeStamp, (PCM Int)) where
+instance ZoomWrite (SampleOffset, (PCM Int)) where
     write = writeDataVBR
 
 instance ZoomWritable (PCM Int) where
     data SummaryWork (PCM Int) = SummaryWorkPCMInt
-        { swPCMIntTime  :: {-# UNPACK #-}!TimeStamp
+        { swPCMIntTime  :: {-# UNPACK #-}!SampleOffset
         , swPCMIntLast  :: {-# UNPACK #-}!Int
         , swPCMIntMin   :: {-# UNPACK #-}!Int
         , swPCMIntMax   :: {-# UNPACK #-}!Int
@@ -164,7 +164,7 @@ instance ZoomPCM Int where
     pcmAvg = summaryIntAvg
     pcmRMS = summaryIntRMS
 
-    pcmWorkTime = swPCMIntTime
+    pcmWorkSO = swPCMIntTime
     pcmWorkLast = swPCMIntLast
     pcmWorkMin = swPCMIntMin
     pcmWorkMax = swPCMIntMax
@@ -176,10 +176,10 @@ instance ZoomPCM Int where
 
 #if __GLASGOW_HASKELL__ >= 702
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int) -> Builder #-}
-{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int) #-}
-{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int) -> SummaryData (PCM Int) #-}
-{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int) -> TimeStampDiff -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
-{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int -> SummaryWork (PCM Int) -> SummaryWork (PCM Int) #-}
+{-# SPECIALIZE initSummaryPCMBounded :: SampleOffset -> SummaryWork (PCM Int) #-}
+{-# SPECIALIZE mkSummaryPCM :: SampleOffsetDiff -> SummaryWork (PCM Int) -> SummaryData (PCM Int) #-}
+{-# SPECIALIZE appendSummaryPCM :: SampleOffsetDiff -> SummaryData (PCM Int) -> SampleOffsetDiff -> SummaryData (PCM Int) -> SummaryData (PCM Int) #-}
+{-# SPECIALIZE updateSummaryPCM :: SampleOffset -> PCM Int -> SummaryWork (PCM Int) -> SummaryWork (PCM Int) #-}
 #endif
 
 ----------------------------------------------------------------------
@@ -210,12 +210,12 @@ instance ZoomReadable (PCM Int8) where
 instance ZoomWrite (PCM Int8) where
     write = writeData
 
-instance ZoomWrite (TimeStamp, (PCM Int8)) where
+instance ZoomWrite (SampleOffset, (PCM Int8)) where
     write = writeDataVBR
 
 instance ZoomWritable (PCM Int8) where
     data SummaryWork (PCM Int8) = SummaryWorkPCMInt8
-        { swPCMInt8Time  :: {-# UNPACK #-}!TimeStamp
+        { swPCMInt8Time  :: {-# UNPACK #-}!SampleOffset
         , swPCMInt8Last  :: {-# UNPACK #-}!Int8
         , swPCMInt8Min   :: {-# UNPACK #-}!Int8
         , swPCMInt8Max   :: {-# UNPACK #-}!Int8
@@ -240,7 +240,7 @@ instance ZoomPCM Int8 where
     pcmAvg = summaryInt8Avg
     pcmRMS = summaryInt8RMS
 
-    pcmWorkTime = swPCMInt8Time
+    pcmWorkSO = swPCMInt8Time
     pcmWorkLast = swPCMInt8Last
     pcmWorkMin = swPCMInt8Min
     pcmWorkMax = swPCMInt8Max
@@ -252,10 +252,10 @@ instance ZoomPCM Int8 where
 
 #if __GLASGOW_HASKELL__ >= 702
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int8) -> Builder #-}
-{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int8) #-}
-{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int8) -> SummaryData (PCM Int8) #-}
-{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int8) -> TimeStampDiff -> SummaryData (PCM Int8) -> SummaryData (PCM Int8) #-}
-{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int8 -> SummaryWork (PCM Int8) -> SummaryWork (PCM Int8) #-}
+{-# SPECIALIZE initSummaryPCMBounded :: SampleOffset -> SummaryWork (PCM Int8) #-}
+{-# SPECIALIZE mkSummaryPCM :: SampleOffsetDiff -> SummaryWork (PCM Int8) -> SummaryData (PCM Int8) #-}
+{-# SPECIALIZE appendSummaryPCM :: SampleOffsetDiff -> SummaryData (PCM Int8) -> SampleOffsetDiff -> SummaryData (PCM Int8) -> SummaryData (PCM Int8) #-}
+{-# SPECIALIZE updateSummaryPCM :: SampleOffset -> PCM Int8 -> SummaryWork (PCM Int8) -> SummaryWork (PCM Int8) #-}
 #endif
 
 ----------------------------------------------------------------------
@@ -286,12 +286,12 @@ instance ZoomReadable (PCM Int16) where
 instance ZoomWrite (PCM Int16) where
     write = writeData
 
-instance ZoomWrite (TimeStamp, (PCM Int16)) where
+instance ZoomWrite (SampleOffset, (PCM Int16)) where
     write = writeDataVBR
 
 instance ZoomWritable (PCM Int16) where
     data SummaryWork (PCM Int16) = SummaryWorkPCMInt16
-        { swPCMInt16Time  :: {-# UNPACK #-}!TimeStamp
+        { swPCMInt16Time  :: {-# UNPACK #-}!SampleOffset
         , swPCMInt16Last  :: {-# UNPACK #-}!Int16
         , swPCMInt16Min   :: {-# UNPACK #-}!Int16
         , swPCMInt16Max   :: {-# UNPACK #-}!Int16
@@ -316,7 +316,7 @@ instance ZoomPCM Int16 where
     pcmAvg = summaryInt16Avg
     pcmRMS = summaryInt16RMS
 
-    pcmWorkTime = swPCMInt16Time
+    pcmWorkSO = swPCMInt16Time
     pcmWorkLast = swPCMInt16Last
     pcmWorkMin = swPCMInt16Min
     pcmWorkMax = swPCMInt16Max
@@ -328,10 +328,10 @@ instance ZoomPCM Int16 where
 
 #if __GLASGOW_HASKELL__ >= 702
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int16) -> Builder #-}
-{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int16) #-}
-{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int16) -> SummaryData (PCM Int16) #-}
-{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int16) -> TimeStampDiff -> SummaryData (PCM Int16) -> SummaryData (PCM Int16) #-}
-{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int16 -> SummaryWork (PCM Int16) -> SummaryWork (PCM Int16) #-}
+{-# SPECIALIZE initSummaryPCMBounded :: SampleOffset -> SummaryWork (PCM Int16) #-}
+{-# SPECIALIZE mkSummaryPCM :: SampleOffsetDiff -> SummaryWork (PCM Int16) -> SummaryData (PCM Int16) #-}
+{-# SPECIALIZE appendSummaryPCM :: SampleOffsetDiff -> SummaryData (PCM Int16) -> SampleOffsetDiff -> SummaryData (PCM Int16) -> SummaryData (PCM Int16) #-}
+{-# SPECIALIZE updateSummaryPCM :: SampleOffset -> PCM Int16 -> SummaryWork (PCM Int16) -> SummaryWork (PCM Int16) #-}
 #endif
 
 ----------------------------------------------------------------------
@@ -362,12 +362,12 @@ instance ZoomReadable (PCM Int32) where
 instance ZoomWrite (PCM Int32) where
     write = writeData
 
-instance ZoomWrite (TimeStamp, (PCM Int32)) where
+instance ZoomWrite (SampleOffset, (PCM Int32)) where
     write = writeDataVBR
 
 instance ZoomWritable (PCM Int32) where
     data SummaryWork (PCM Int32) = SummaryWorkPCMInt32
-        { swPCMInt32Time  :: {-# UNPACK #-}!TimeStamp
+        { swPCMInt32Time  :: {-# UNPACK #-}!SampleOffset
         , swPCMInt32Last  :: {-# UNPACK #-}!Int32
         , swPCMInt32Min   :: {-# UNPACK #-}!Int32
         , swPCMInt32Max   :: {-# UNPACK #-}!Int32
@@ -392,7 +392,7 @@ instance ZoomPCM Int32 where
     pcmAvg = summaryInt32Avg
     pcmRMS = summaryInt32RMS
 
-    pcmWorkTime = swPCMInt32Time
+    pcmWorkSO = swPCMInt32Time
     pcmWorkLast = swPCMInt32Last
     pcmWorkMin = swPCMInt32Min
     pcmWorkMax = swPCMInt32Max
@@ -404,10 +404,10 @@ instance ZoomPCM Int32 where
 
 #if __GLASGOW_HASKELL__ >= 702
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int32) -> Builder #-}
-{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int32) #-}
-{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int32) -> SummaryData (PCM Int32) #-}
-{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int32) -> TimeStampDiff -> SummaryData (PCM Int32) -> SummaryData (PCM Int32) #-}
-{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int32 -> SummaryWork (PCM Int32) -> SummaryWork (PCM Int32) #-}
+{-# SPECIALIZE initSummaryPCMBounded :: SampleOffset -> SummaryWork (PCM Int32) #-}
+{-# SPECIALIZE mkSummaryPCM :: SampleOffsetDiff -> SummaryWork (PCM Int32) -> SummaryData (PCM Int32) #-}
+{-# SPECIALIZE appendSummaryPCM :: SampleOffsetDiff -> SummaryData (PCM Int32) -> SampleOffsetDiff -> SummaryData (PCM Int32) -> SummaryData (PCM Int32) #-}
+{-# SPECIALIZE updateSummaryPCM :: SampleOffset -> PCM Int32 -> SummaryWork (PCM Int32) -> SummaryWork (PCM Int32) #-}
 #endif
 
 ----------------------------------------------------------------------
@@ -438,12 +438,12 @@ instance ZoomReadable (PCM Int64) where
 instance ZoomWrite (PCM Int64) where
     write = writeData
 
-instance ZoomWrite (TimeStamp, (PCM Int64)) where
+instance ZoomWrite (SampleOffset, (PCM Int64)) where
     write = writeDataVBR
 
 instance ZoomWritable (PCM Int64) where
     data SummaryWork (PCM Int64) = SummaryWorkPCMInt64
-        { swPCMInt64Time  :: {-# UNPACK #-}!TimeStamp
+        { swPCMInt64Time  :: {-# UNPACK #-}!SampleOffset
         , swPCMInt64Last  :: {-# UNPACK #-}!Int64
         , swPCMInt64Min   :: {-# UNPACK #-}!Int64
         , swPCMInt64Max   :: {-# UNPACK #-}!Int64
@@ -468,7 +468,7 @@ instance ZoomPCM Int64 where
     pcmAvg = summaryInt64Avg
     pcmRMS = summaryInt64RMS
 
-    pcmWorkTime = swPCMInt64Time
+    pcmWorkSO = swPCMInt64Time
     pcmWorkLast = swPCMInt64Last
     pcmWorkMin = swPCMInt64Min
     pcmWorkMax = swPCMInt64Max
@@ -480,10 +480,10 @@ instance ZoomPCM Int64 where
 
 #if __GLASGOW_HASKELL__ >= 702
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Int64) -> Builder #-}
-{-# SPECIALIZE initSummaryPCMBounded :: TimeStamp -> SummaryWork (PCM Int64) #-}
-{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Int64) -> SummaryData (PCM Int64) #-}
-{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Int64) -> TimeStampDiff -> SummaryData (PCM Int64) -> SummaryData (PCM Int64) #-}
-{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Int64 -> SummaryWork (PCM Int64) -> SummaryWork (PCM Int64) #-}
+{-# SPECIALIZE initSummaryPCMBounded :: SampleOffset -> SummaryWork (PCM Int64) #-}
+{-# SPECIALIZE mkSummaryPCM :: SampleOffsetDiff -> SummaryWork (PCM Int64) -> SummaryData (PCM Int64) #-}
+{-# SPECIALIZE appendSummaryPCM :: SampleOffsetDiff -> SummaryData (PCM Int64) -> SampleOffsetDiff -> SummaryData (PCM Int64) -> SummaryData (PCM Int64) #-}
+{-# SPECIALIZE updateSummaryPCM :: SampleOffset -> PCM Int64 -> SummaryWork (PCM Int64) -> SummaryWork (PCM Int64) #-}
 #endif
 
 ----------------------------------------------------------------------

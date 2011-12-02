@@ -108,12 +108,12 @@ instance ZoomReadable (PCM Float) where
 instance ZoomWrite (PCM Float) where
     write = writeData
 
-instance ZoomWrite (TimeStamp, PCM Float) where
+instance ZoomWrite (SampleOffset, PCM Float) where
     write = writeDataVBR
 
 instance ZoomWritable (PCM Float) where
     data SummaryWork (PCM Float) = SummaryWorkPCMFloat
-        { swPCMFloatTime  :: {-# UNPACK #-}!TimeStamp
+        { swPCMFloatTime  :: {-# UNPACK #-}!SampleOffset
         , swPCMFloatLast  :: {-# UNPACK #-}!Float
         , swPCMFloatMin   :: {-# UNPACK #-}!Float
         , swPCMFloatMax   :: {-# UNPACK #-}!Float
@@ -137,7 +137,7 @@ instance ZoomPCM Float where
     pcmAvg = summaryPCMFloatAvg
     pcmRMS = summaryPCMFloatRMS
 
-    pcmWorkTime = swPCMFloatTime
+    pcmWorkSO = swPCMFloatTime
     pcmWorkLast = swPCMFloatLast
     pcmWorkMin = swPCMFloatMin
     pcmWorkMax = swPCMFloatMax
@@ -149,9 +149,9 @@ instance ZoomPCM Float where
 
 #if __GLASGOW_HASKELL__ >= 702
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Float) -> Builder #-}
-{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Float) -> SummaryData (PCM Float) #-}
-{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Float) -> TimeStampDiff -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
-{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Float -> SummaryWork (PCM Float) -> SummaryWork (PCM Float) #-}
+{-# SPECIALIZE mkSummaryPCM :: SampleOffsetDiff -> SummaryWork (PCM Float) -> SummaryData (PCM Float) #-}
+{-# SPECIALIZE appendSummaryPCM :: SampleOffsetDiff -> SummaryData (PCM Float) -> SampleOffsetDiff -> SummaryData (PCM Float) -> SummaryData (PCM Float) #-}
+{-# SPECIALIZE updateSummaryPCM :: SampleOffset -> PCM Float -> SummaryWork (PCM Float) -> SummaryWork (PCM Float) #-}
 #endif
 
 ----------------------------------------------------------------------
@@ -182,12 +182,12 @@ instance ZoomReadable (PCM Double) where
 instance ZoomWrite (PCM Double) where
     write = writeData
 
-instance ZoomWrite (TimeStamp, PCM Double) where
+instance ZoomWrite (SampleOffset, PCM Double) where
     write = writeDataVBR
 
 instance ZoomWritable (PCM Double) where
     data SummaryWork (PCM Double) = SummaryWorkPCMDouble
-        { swPCMDoubleTime  :: {-# UNPACK #-}!TimeStamp
+        { swPCMDoubleTime  :: {-# UNPACK #-}!SampleOffset
         , swPCMDoubleLast  :: {-# UNPACK #-}!Double
         , swPCMDoubleMin   :: {-# UNPACK #-}!Double
         , swPCMDoubleMax   :: {-# UNPACK #-}!Double
@@ -211,7 +211,7 @@ instance ZoomPCM Double where
     pcmAvg = summaryPCMDoubleAvg
     pcmRMS = summaryPCMDoubleRMS
 
-    pcmWorkTime = swPCMDoubleTime
+    pcmWorkSO = swPCMDoubleTime
     pcmWorkLast = swPCMDoubleLast
     pcmWorkMin = swPCMDoubleMin
     pcmWorkMax = swPCMDoubleMax
@@ -223,9 +223,9 @@ instance ZoomPCM Double where
 
 #if __GLASGOW_HASKELL__ >= 702
 {-# SPECIALIZE fromSummaryPCM :: SummaryData (PCM Double) -> Builder #-}
-{-# SPECIALIZE mkSummaryPCM :: TimeStampDiff -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
-{-# SPECIALIZE appendSummaryPCM :: TimeStampDiff -> SummaryData (PCM Double) -> TimeStampDiff -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
-{-# SPECIALIZE updateSummaryPCM :: TimeStamp -> PCM Double -> SummaryWork (PCM Double) -> SummaryWork (PCM Double) #-}
+{-# SPECIALIZE mkSummaryPCM :: SampleOffsetDiff -> SummaryWork (PCM Double) -> SummaryData (PCM Double) #-}
+{-# SPECIALIZE appendSummaryPCM :: SampleOffsetDiff -> SummaryData (PCM Double) -> SampleOffsetDiff -> SummaryData (PCM Double) -> SummaryData (PCM Double) #-}
+{-# SPECIALIZE updateSummaryPCM :: SampleOffset -> PCM Double -> SummaryWork (PCM Double) -> SummaryWork (PCM Double) #-}
 #endif
 
 ----------------------------------------------------------------------
@@ -242,7 +242,7 @@ prettySummaryPCMFloat s = concat
     ]
 
 initSummaryPCMFloat :: (RealFloat a, ZoomPCM a)
-                    => TimeStamp -> SummaryWork (PCM a)
+                    => SampleOffset -> SummaryWork (PCM a)
 initSummaryPCMFloat entry = pcmMkSummaryWork
     entry
     0.0

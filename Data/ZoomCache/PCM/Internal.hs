@@ -42,24 +42,24 @@ fromSummaryPCM s = mconcat $
 {-# INLINABLE fromSummaryPCM #-}
 
 initSummaryPCMBounded :: (Bounded a, ZoomPCM a)
-                      => TimeStamp -> SummaryWork (PCM a)
+                      => SampleOffset -> SummaryWork (PCM a)
 initSummaryPCMBounded entry = pcmMkSummaryWork entry 0 maxBound minBound 0.0 0.0
 {-# INLINEABLE initSummaryPCMBounded #-}
 
 mkSummaryPCM :: ZoomPCM a
-             => TimeStampDiff -> SummaryWork (PCM a)
+             => SampleOffsetDiff -> SummaryWork (PCM a)
              -> SummaryData (PCM a)
-mkSummaryPCM (TSDiff dur) sw =
+mkSummaryPCM (SODiff dur) sw =
     pcmMkSummary (pcmWorkMin sw) (pcmWorkMax sw)
                  (pcmWorkSum sw / fromIntegral dur)
                  (sqrt $ (pcmWorkSumSq sw) / fromIntegral dur)
 {-# INLINEABLE mkSummaryPCM #-}
 
 appendSummaryPCM :: ZoomPCM a
-                 => TimeStampDiff -> SummaryData (PCM a)
-                 -> TimeStampDiff -> SummaryData (PCM a)
+                 => SampleOffsetDiff -> SummaryData (PCM a)
+                 -> SampleOffsetDiff -> SummaryData (PCM a)
                  -> SummaryData (PCM a)
-appendSummaryPCM (TSDiff dur1) s1 (TSDiff dur2) s2 = pcmMkSummary
+appendSummaryPCM (SODiff dur1) s1 (SODiff dur2) s2 = pcmMkSummary
     (min (pcmMin s1) (pcmMin s2))
     (max (pcmMax s1) (pcmMax s2))
     (((pcmAvg s1 * fromIntegral dur1) + (pcmAvg s2 * fromIntegral dur2)) / fromIntegral durSum)
@@ -71,7 +71,7 @@ appendSummaryPCM (TSDiff dur1) s1 (TSDiff dur2) s2 = pcmMkSummary
 {-# INLINEABLE appendSummaryPCM #-}
 
 updateSummaryPCM :: ZoomPCM a
-                 => TimeStamp -> PCM a
+                 => SampleOffset -> PCM a
                  -> SummaryWork (PCM a)
                  -> SummaryWork (PCM a)
 updateSummaryPCM t (PCM d) sw =
@@ -81,7 +81,7 @@ updateSummaryPCM t (PCM d) sw =
                      ((pcmWorkSum sw) + realToFrac (d * dur))
                      ((pcmWorkSumSq sw) + realToFrac (d*d * dur))
     where
-        !dur = fromIntegral $ (unTS t) - (unTS (pcmWorkTime sw))
+        !dur = fromIntegral $ (unSO t) - (unSO (pcmWorkSO sw))
 {-# INLINEABLE updateSummaryPCM #-}
 
 deltaDecodePCM :: ZoomPCM a => [PCM a] -> [PCM a]
