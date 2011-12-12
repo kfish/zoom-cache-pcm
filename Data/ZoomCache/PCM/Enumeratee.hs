@@ -20,6 +20,9 @@ module Data.ZoomCache.PCM.Enumeratee (
 
     , enumSummaryPCMDouble
     , wholeTrackSummaryPCMDouble
+
+    , enumSummaryListPCMDouble
+    , wholeTrackSummaryListPCMDouble
 ) where
 
 import Control.Applicative ((<$>))
@@ -33,6 +36,7 @@ import Data.TypeLevel.Num hiding ((==))
 import Data.ZoomCache
 import Data.ZoomCache.Codec
 import Data.ZoomCache.NList
+import Data.ZoomCache.Multichannel.NList
 
 import Data.ZoomCache.PCM.Types
 import Data.ZoomCache.PCM.IEEE754()
@@ -114,6 +118,30 @@ toSummaryDataPCMDouble s = pcmMkSummary
     (pcmAvg s)
     (pcmRMS s)
 
+toSummaryListPCMDouble :: Typeable a => Summary a -> Maybe [Summary (PCM Double)]
+toSummaryListPCMDouble s | isJust sd = (:[]) <$> sd
+                         | typeOf s == typeOf (undefined :: Summary (NList D1 (PCM Double))) =
+                                   sl <$> (cast s :: Maybe (Summary (NList D1 (PCM Double))))
+                         | typeOf s == typeOf (undefined :: Summary (NList D1 (PCM Float))) =
+                                  sld <$> (cast s :: Maybe (Summary (NList D1 (PCM Float))))
+                         | typeOf s == typeOf (undefined :: Summary (NList D1 (PCM Int))) =
+                                  sld <$> (cast s :: Maybe (Summary (NList D1 (PCM Int))))
+                         | typeOf s == typeOf (undefined :: Summary (NList D1 (PCM Int8))) =
+                                  sld <$> (cast s :: Maybe (Summary (NList D1 (PCM Int8))))
+                         | typeOf s == typeOf (undefined :: Summary (NList D1 (PCM Int16))) =
+                                  sld <$> (cast s :: Maybe (Summary (NList D1 (PCM Int16))))
+                         | typeOf s == typeOf (undefined :: Summary (NList D1 (PCM Int32))) =
+                                  sld <$> (cast s :: Maybe (Summary (NList D1 (PCM Int32))))
+                         | typeOf s == typeOf (undefined :: Summary (NList D1 (PCM Int64))) =
+                                  sld <$> (cast s :: Maybe (Summary (NList D1 (PCM Int64))))
+                         | otherwise = Nothing
+    where
+        sd = toSummaryPCMDouble s
+        sl :: Summary (NList D1 a) -> [Summary a]
+        sl = summaryNListToList
+        sld :: Typeable a => Summary (NList D1 a) -> [Summary (PCM Double)]
+        sld = catMaybes . map toSummaryPCMDouble . sl
+
 ----------------------------------------------------------------------
 
 enumPCMDouble :: (Functor m, MonadIO m)
@@ -153,3 +181,26 @@ enumSummaryPCMDouble level =
     where
         toSD :: ZoomSummary -> Maybe (Summary (PCM Double))
         toSD (ZoomSummary s) = toSummaryPCMDouble s
+
+-- | Read the summary of an entire track.
+wholeTrackSummaryListPCMDouble :: (Functor m, MonadIO m)
+                               => [IdentifyCodec]
+                               -> TrackNo
+                               -> I.Iteratee ByteString m [Summary (PCM Double)]
+wholeTrackSummaryListPCMDouble identifiers trackNo =
+    I.joinI $ enumCacheFile identifiers .
+    I.joinI . filterTracks [trackNo] .  I.joinI . e $ I.last
+    where
+        e = I.joinI . enumSummaries . I.mapChunks (catMaybes . map toSLD)
+        toSLD :: ZoomSummary -> Maybe [Summary (PCM Double)]
+        toSLD (ZoomSummary s) = toSummaryListPCMDouble s
+
+enumSummaryListPCMDouble :: (Functor m, MonadIO m)
+                         => Int
+                         -> I.Enumeratee [Stream] [[Summary (PCM Double)]] m a
+enumSummaryListPCMDouble level =
+    I.joinI . enumSummaryLevel level .
+    I.mapChunks (catMaybes . map toSLD)
+    where
+        toSLD :: ZoomSummary -> Maybe [Summary (PCM Double)]
+        toSLD (ZoomSummary s) = toSummaryListPCMDouble s
