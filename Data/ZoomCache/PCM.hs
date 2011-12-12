@@ -6,12 +6,15 @@ module Data.ZoomCache.PCM (
 
     -- * Codec identifiers
     , pcmIdentifiers
+
+    , enumPCMDouble
 ) where
 
 import Data.ByteString (ByteString)
 import Data.Int
 import Data.ZoomCache.Codec (Codec, identifyCodec)
 
+import Data.ZoomCache.PCM.Enumeratee
 import Data.ZoomCache.PCM.Types
 
 import Data.ZoomCache.PCM.IEEE754()

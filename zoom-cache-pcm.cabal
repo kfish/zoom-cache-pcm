@@ -48,10 +48,12 @@ Library
     containers                >= 0.2     && < 0.5,
     iteratee                  >= 0.8.6.0 && < 0.9,
     ListLike                  >= 1.0     && < 4,
+    mtl                       >= 2.0.0.0 && < 3,
     zoom-cache                >= 0.7.0.0 && < 0.10
 
   Exposed-modules:
     Data.ZoomCache.PCM
+    Data.ZoomCache.PCM.Enumeratee
     Data.ZoomCache.PCM.IEEE754
     Data.ZoomCache.PCM.Int
     Data.ZoomCache.PCM.Internal
