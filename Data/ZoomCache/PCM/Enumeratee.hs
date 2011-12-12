@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS -Wall #-}
 ----------------------------------------------------------------------
@@ -15,6 +16,7 @@
 
 module Data.ZoomCache.PCM.Enumeratee (
       enumPCMDouble
+    , enumListPCMDouble
 ) where
 
 import Control.Monad.Trans (MonadIO)
@@ -22,10 +24,13 @@ import Data.Int
 import qualified Data.Iteratee as I
 import Data.Maybe
 import Data.Typeable
-import Data.Word
+import Data.TypeLevel.Num hiding ((==))
 import Data.ZoomCache
+import Data.ZoomCache.NList
 
 import Data.ZoomCache.PCM.Types
+import Data.ZoomCache.PCM.IEEE754()
+import Data.ZoomCache.PCM.Int()
 
 ----------------------------------------------------------------------
 
@@ -44,22 +49,34 @@ rawToPCMDouble (ZoomRaw xs) | typeOf xs == typeOf (undefined :: [PCM Double]) =
                                             f (cast xs :: Maybe [PCM Int32])
                             | typeOf xs == typeOf (undefined :: [PCM Int64]) =
                                             f (cast xs :: Maybe [PCM Int64])
-                            | typeOf xs == typeOf (undefined :: [PCM Integer]) =
-                                            f (cast xs :: Maybe [PCM Integer])
-                            | typeOf xs == typeOf (undefined :: [PCM Word]) =
-                                            f (cast xs :: Maybe [PCM Word])
-                            | typeOf xs == typeOf (undefined :: [PCM Word8]) =
-                                            f (cast xs :: Maybe [PCM Word8])
-                            | typeOf xs == typeOf (undefined :: [PCM Word16]) =
-                                            f (cast xs :: Maybe [PCM Word16])
-                            | typeOf xs == typeOf (undefined :: [PCM Word32]) =
-                                            f (cast xs :: Maybe [PCM Word32])
-                            | typeOf xs == typeOf (undefined :: [PCM Word64]) =
-                                            f (cast xs :: Maybe [PCM Word64])
                             | otherwise = []
     where
         f :: Real a => Maybe [PCM a] -> [PCM Double]
         f = maybe [] (map (PCM . realToFrac . unPCM))
+
+rawToListPCMDouble :: ZoomRaw -> [[PCM Double]]
+rawToListPCMDouble (ZoomRaw xs) | not (null d) = [d]
+                                | typeOf xs == typeOf (undefined :: [NList D1 (PCM Double)]) =
+                                                l (cast xs :: Maybe [NList D1 (PCM Double)])
+                                | typeOf xs == typeOf (undefined :: [NList D1 (PCM Float)]) =
+                                                f (cast xs :: Maybe [NList D1 (PCM Float)])
+                                | typeOf xs == typeOf (undefined :: [NList D1 (PCM Int)]) =
+                                                f (cast xs :: Maybe [NList D1 (PCM Int)])
+                                | typeOf xs == typeOf (undefined :: [NList D1 (PCM Int8)]) =
+                                                f (cast xs :: Maybe [NList D1 (PCM Int8)])
+                                | typeOf xs == typeOf (undefined :: [NList D1 (PCM Int16)]) =
+                                                f (cast xs :: Maybe [NList D1 (PCM Int16)])
+                                | typeOf xs == typeOf (undefined :: [NList D1 (PCM Int32)]) =
+                                                f (cast xs :: Maybe [NList D1 (PCM Int32)])
+                                | typeOf xs == typeOf (undefined :: [NList D1 (PCM Int64)]) =
+                                                f (cast xs :: Maybe [NList D1 (PCM Int64)])
+                                | otherwise = []
+    where
+        d = rawToPCMDouble (ZoomRaw xs)
+        l :: Maybe [NList D1 a] -> [[a]]
+        l = maybe [] (map nListToList)
+        f :: (ZoomReadable a) => Maybe [NList D1 a] -> [[PCM Double]]
+        f = map (rawToPCMDouble . ZoomRaw) . l
 
 ----------------------------------------------------------------------
 
@@ -69,4 +86,11 @@ enumPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
     where
         f :: Packet -> [(TimeStamp, PCM Double)]
         f Packet{..} = zip packetTimeStamps (rawToPCMDouble packetData)
+
+enumListPCMDouble :: (Functor m, MonadIO m)
+                  => I.Enumeratee [Stream] [(TimeStamp, [PCM Double])] m a
+enumListPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
+    where
+        f :: Packet -> [(TimeStamp, [PCM Double])]
+        f Packet{..} = zip packetTimeStamps (rawToListPCMDouble packetData)
 

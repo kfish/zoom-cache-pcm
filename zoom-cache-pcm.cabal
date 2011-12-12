@@ -49,6 +49,7 @@ Library
     iteratee                  >= 0.8.6.0 && < 0.9,
     ListLike                  >= 1.0     && < 4,
     mtl                       >= 2.0.0.0 && < 3,
+    type-level,
     zoom-cache                >= 0.7.0.0 && < 0.10
 
   Exposed-modules:
