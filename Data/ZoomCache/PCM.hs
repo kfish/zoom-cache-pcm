@@ -9,6 +9,7 @@ module Data.ZoomCache.PCM (
 
     , enumPCMDouble
     , enumListPCMDouble
+    , enumSummaryPCMDouble
 ) where
 
 import Data.ByteString (ByteString)

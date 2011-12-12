@@ -17,8 +17,11 @@
 module Data.ZoomCache.PCM.Enumeratee (
       enumPCMDouble
     , enumListPCMDouble
+
+    , enumSummaryPCMDouble
 ) where
 
+import Control.Applicative ((<$>))
 import Control.Monad.Trans (MonadIO)
 import Data.Int
 import qualified Data.Iteratee as I
@@ -26,6 +29,7 @@ import Data.Maybe
 import Data.Typeable
 import Data.TypeLevel.Num hiding ((==))
 import Data.ZoomCache
+import Data.ZoomCache.Codec
 import Data.ZoomCache.NList
 
 import Data.ZoomCache.PCM.Types
@@ -80,6 +84,36 @@ rawToListPCMDouble (ZoomRaw xs) | not (null d) = [d]
 
 ----------------------------------------------------------------------
 
+-- | Coercion of numeric Summary to type Summary Double.
+toSummaryPCMDouble :: Typeable a => Summary a -> Maybe (Summary (PCM Double))
+toSummaryPCMDouble s | typeOf s == typeOf (undefined :: Summary (PCM Double)) =
+                                   id (cast s :: Maybe (Summary (PCM Double)))
+                     | typeOf s == typeOf (undefined :: Summary (PCM Float)) =
+                               sd <$> (cast s :: Maybe (Summary (PCM Float)))
+                     | typeOf s == typeOf (undefined :: Summary (PCM Int)) =
+                               sd <$> (cast s :: Maybe (Summary (PCM Int)))
+                     | typeOf s == typeOf (undefined :: Summary (PCM Int8)) =
+                               sd <$> (cast s :: Maybe (Summary (PCM Int8)))
+                     | typeOf s == typeOf (undefined :: Summary (PCM Int16)) =
+                               sd <$> (cast s :: Maybe (Summary (PCM Int16)))
+                     | typeOf s == typeOf (undefined :: Summary (PCM Int32)) =
+                               sd <$> (cast s :: Maybe (Summary (PCM Int32)))
+                     | typeOf s == typeOf (undefined :: Summary (PCM Int64)) =
+                               sd <$> (cast s :: Maybe (Summary (PCM Int64)))
+                     | otherwise = Nothing
+    where
+        sd :: ZoomPCM a => Summary (PCM a) -> Summary (PCM Double)
+        sd s' = s' { summaryData = toSummaryDataPCMDouble (summaryData s') }
+
+toSummaryDataPCMDouble :: ZoomPCM a => SummaryData (PCM a) -> SummaryData (PCM Double)
+toSummaryDataPCMDouble s = pcmMkSummary
+    (realToFrac . pcmMin $ s)
+    (realToFrac . pcmMax $ s)
+    (pcmAvg s)
+    (pcmRMS s)
+
+----------------------------------------------------------------------
+
 enumPCMDouble :: (Functor m, MonadIO m)
               => I.Enumeratee [Stream] [(TimeStamp, PCM Double)] m a
 enumPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
@@ -94,3 +128,14 @@ enumListPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
         f :: Packet -> [(TimeStamp, [PCM Double])]
         f Packet{..} = zip packetTimeStamps (rawToListPCMDouble packetData)
 
+----------------------------------------------------------------------
+
+enumSummaryPCMDouble :: (Functor m, MonadIO m)
+                     => Int
+                     -> I.Enumeratee [Stream] [Summary (PCM Double)] m a
+enumSummaryPCMDouble level =
+    I.joinI . enumSummaryLevel level .
+    I.mapChunks (catMaybes . map toSD)
+    where
+        toSD :: ZoomSummary -> Maybe (Summary (PCM Double))
+        toSD (ZoomSummary s) = toSummaryPCMDouble s
