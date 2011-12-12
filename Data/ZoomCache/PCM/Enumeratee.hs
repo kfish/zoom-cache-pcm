@@ -19,10 +19,12 @@ module Data.ZoomCache.PCM.Enumeratee (
     , enumListPCMDouble
 
     , enumSummaryPCMDouble
+    , wholeTrackSummaryPCMDouble
 ) where
 
 import Control.Applicative ((<$>))
 import Control.Monad.Trans (MonadIO)
+import Data.ByteString (ByteString)
 import Data.Int
 import qualified Data.Iteratee as I
 import Data.Maybe
@@ -129,6 +131,18 @@ enumListPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
         f Packet{..} = zip packetTimeStamps (rawToListPCMDouble packetData)
 
 ----------------------------------------------------------------------
+
+-- | Read the summary of an entire track.
+wholeTrackSummaryPCMDouble :: (Functor m, MonadIO m)
+                           => [IdentifyCodec]
+                           -> TrackNo
+                           -> I.Iteratee ByteString m (Summary (PCM Double))
+wholeTrackSummaryPCMDouble identifiers trackNo = I.joinI $ enumCacheFile identifiers .
+    I.joinI . filterTracks [trackNo] .  I.joinI . e $ I.last
+    where
+        e = I.joinI . enumSummaries . I.mapChunks (catMaybes . map toSD)
+        toSD :: ZoomSummary -> Maybe (Summary (PCM Double))
+        toSD (ZoomSummary s) = toSummaryPCMDouble s
 
 enumSummaryPCMDouble :: (Functor m, MonadIO m)
                      => Int
