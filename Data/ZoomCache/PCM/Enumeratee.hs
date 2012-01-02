@@ -145,14 +145,14 @@ toSummaryListPCMDouble s | isJust sd = (:[]) <$> sd
 ----------------------------------------------------------------------
 
 enumPCMDouble :: (Functor m, MonadIO m)
-              => I.Enumeratee [Stream] [(TimeStamp, PCM Double)] m a
+              => I.Enumeratee [Block] [(TimeStamp, PCM Double)] m a
 enumPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
     where
         f :: Packet -> [(TimeStamp, PCM Double)]
         f Packet{..} = zip packetTimeStamps (rawToPCMDouble packetData)
 
 enumListPCMDouble :: (Functor m, MonadIO m)
-                  => I.Enumeratee [Stream] [(TimeStamp, [PCM Double])] m a
+                  => I.Enumeratee [Block] [(TimeStamp, [PCM Double])] m a
 enumListPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
     where
         f :: Packet -> [(TimeStamp, [PCM Double])]
@@ -174,7 +174,7 @@ wholeTrackSummaryPCMDouble identifiers trackNo = I.joinI $ enumCacheFile identif
 
 enumSummaryPCMDouble :: (Functor m, MonadIO m)
                      => Int
-                     -> I.Enumeratee [Stream] [Summary (PCM Double)] m a
+                     -> I.Enumeratee [Block] [Summary (PCM Double)] m a
 enumSummaryPCMDouble level =
     I.joinI . enumSummaryLevel level .
     I.mapChunks (catMaybes . map toSD)
@@ -197,7 +197,7 @@ wholeTrackSummaryListPCMDouble identifiers trackNo =
 
 enumSummaryListPCMDouble :: (Functor m, MonadIO m)
                          => Int
-                         -> I.Enumeratee [Stream] [[Summary (PCM Double)]] m a
+                         -> I.Enumeratee [Block] [[Summary (PCM Double)]] m a
 enumSummaryListPCMDouble level =
     I.joinI . enumSummaryLevel level .
     I.mapChunks (catMaybes . map toSLD)
