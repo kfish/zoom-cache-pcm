@@ -4,6 +4,9 @@ module Data.ZoomCache.PCM (
     -- * PCM Type
       PCM(..)
 
+    -- * Classes
+    , ZoomPCM(..)
+
     -- * Codec identifiers
     , pcmIdentifiers
 
