@@ -31,6 +31,7 @@ import Data.ByteString (ByteString)
 import Data.Int
 import qualified Data.Iteratee as I
 import Data.Maybe
+import Data.Offset
 import Data.Typeable
 import Data.TypeLevel.Num hiding ((==))
 import Data.ZoomCache
@@ -145,14 +146,14 @@ toSummaryListPCMDouble s | isJust sd = (:[]) <$> sd
 ----------------------------------------------------------------------
 
 enumPCMDouble :: (Functor m, MonadIO m)
-              => I.Enumeratee [Block] [(TimeStamp, PCM Double)] m a
+              => I.Enumeratee [Offset Block] [(TimeStamp, PCM Double)] m a
 enumPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
     where
         f :: Packet -> [(TimeStamp, PCM Double)]
         f Packet{..} = zip packetTimeStamps (rawToPCMDouble packetData)
 
 enumListPCMDouble :: (Functor m, MonadIO m)
-                  => I.Enumeratee [Block] [(TimeStamp, [PCM Double])] m a
+                  => I.Enumeratee [Offset Block] [(TimeStamp, [PCM Double])] m a
 enumListPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
     where
         f :: Packet -> [(TimeStamp, [PCM Double])]
@@ -164,7 +165,7 @@ enumListPCMDouble = I.joinI . enumPackets . I.mapChunks (concatMap f)
 wholeTrackSummaryPCMDouble :: (Functor m, MonadIO m)
                            => [IdentifyCodec]
                            -> TrackNo
-                           -> I.Iteratee ByteString m (Summary (PCM Double))
+                           -> I.Iteratee (Offset ByteString) m (Summary (PCM Double))
 wholeTrackSummaryPCMDouble identifiers trackNo = I.joinI $ enumCacheFile identifiers .
     I.joinI . filterTracks [trackNo] .  I.joinI . e $ I.last
     where
@@ -174,7 +175,7 @@ wholeTrackSummaryPCMDouble identifiers trackNo = I.joinI $ enumCacheFile identif
 
 enumSummaryPCMDouble :: (Functor m, MonadIO m)
                      => Int
-                     -> I.Enumeratee [Block] [Summary (PCM Double)] m a
+                     -> I.Enumeratee [Offset Block] [Summary (PCM Double)] m a
 enumSummaryPCMDouble level =
     I.joinI . enumSummaryLevel level .
     I.mapChunks (catMaybes . map toSD)
@@ -186,7 +187,7 @@ enumSummaryPCMDouble level =
 wholeTrackSummaryListPCMDouble :: (Functor m, MonadIO m)
                                => [IdentifyCodec]
                                -> TrackNo
-                               -> I.Iteratee ByteString m [Summary (PCM Double)]
+                               -> I.Iteratee (Offset ByteString) m [Summary (PCM Double)]
 wholeTrackSummaryListPCMDouble identifiers trackNo =
     I.joinI $ enumCacheFile identifiers .
     I.joinI . filterTracks [trackNo] .  I.joinI . e $ I.last
@@ -197,7 +198,7 @@ wholeTrackSummaryListPCMDouble identifiers trackNo =
 
 enumSummaryListPCMDouble :: (Functor m, MonadIO m)
                          => Int
-                         -> I.Enumeratee [Block] [[Summary (PCM Double)]] m a
+                         -> I.Enumeratee [Offset Block] [[Summary (PCM Double)]] m a
 enumSummaryListPCMDouble level =
     I.joinI . enumSummaryLevel level .
     I.mapChunks (catMaybes . map toSLD)
